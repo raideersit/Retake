@@ -11,7 +11,13 @@ hooks, lectura de memoria ni drivers** (compatible con antitrampas de kernel com
 | Captura | Monitor completo (Desktop Duplication, sin borde amarillo) o ventana (Windows.Graphics.Capture) |
 | Video | H.264 por hardware: NVENC, AMF o Quick Sync vía Media Foundation; respaldo por software |
 | Audio | Pista 1 mezcla · pista 2 sistema · pista 3 micrófono (AAC 48 kHz) |
-| Interfaz | Icono en la bandeja, ventana de ajustes, notificación con la ruta del clip, inicio con Windows |
+| Interfaz | Estilo retro Windows 95: icono pixel-art en la bandeja, menú clásico, ventana de ajustes; notificación con la ruta del clip; inicio con Windows |
+| Sonidos | Tono corto al guardar un clip y al iniciar/detener la grabación (desactivable) |
+
+Los atajos se cambian en *Ajustes → Atajos y archivos*: haz clic en la casilla, pulsa la combinación y
+**Guardar**. En teclados 60 % (sin fila de funciones) F9/F10 dependen de la capa Fn y a veces no llegan a
+Windows combinados con Ctrl+Shift; `Ctrl+Shift+9` y `Ctrl+Shift+0` funcionan bien y no chocan con League
+of Legends. Evita `Alt+Shift` (cambia el idioma del teclado) y `Ctrl+Alt` (equivale a AltGr en español).
 
 ## Requisitos
 
@@ -108,8 +114,11 @@ Ver [docs/PRUEBAS.md](docs/PRUEBAS.md).
   baja latencia no los genera (verificado: los clips solo tienen slices I y P). El muxer asume DTS = PTS;
   si otro driver generara B-frames, la herramienta de pruebas lo detecta (cuenta los slices B) y habría
   que añadir el reordenamiento.
-* **RAM** con 30 s a 20 Mbps: ~120 MB de conjunto de trabajo privado (Administrador de tareas). Con
-  120 s a 25 Mbps el búfer ocupa ~380 MB; la ventana de ajustes muestra la estimación.
+* **RAM** con 30 s a 20 Mbps: ~125 MB de conjunto de trabajo privado en la app real (Administrador de
+  tareas). Con 120 s a 25 Mbps el búfer ocupa ~380 MB; la ventana de ajustes muestra la estimación.
+* **Sonidos de confirmación**: salen por los altavoces, así que quedan en el audio del sistema de los clips
+  siguientes y al principio y final de las grabaciones. Windows 11 permitiría excluir el audio de la propia
+  app de la captura; Windows 10 no. Se pueden desactivar en Ajustes.
 * **Pistas de audio**: muchos reproductores (Películas y TV, navegadores, Discord) solo reproducen la
   primera pista, que por eso es la mezcla. Sistema y micrófono por separado sirven para editar.
 * **Deriva del reloj de audio**: se corrige insertando o quitando bloques de 20 ms cuando la diferencia

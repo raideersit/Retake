@@ -70,10 +70,14 @@ de video (`capturados`, `aceptados`, `repetidos`, `enviados`, `codificados`, `de
 | Codificador | NVIDIA H.264 Encoder MFT, entrada en GPU sin copias |
 | Clip de 30 s | 29,95 s, ~59 fps, clave cada ≤1,05 s, slices I=30 P=1729 B=0 |
 | Audio (3 pistas) | desfase con el video ≤ 13 ms |
-| CPU del proceso | 0,15–0,6 % |
-| GPU | motor 3D 0 %, VideoEncode ~9 % (bloque NVENC dedicado, no compite con el juego) |
-| Memoria (conjunto de trabajo privado) | ~120 MB con 30 s a 20 Mbps |
+| CPU del proceso | 0,15–0,6 % (app real con bandeja: 0,13 % de media, 0,73 % de máximo) |
+| GPU | motor 3D 0,3 % de media (máx. 2 %), VideoEncode ~12 % (bloque NVENC dedicado, no compite con el juego) |
+| Memoria (conjunto de trabajo privado) | ~120 MB la prueba automática; ~125 MB la app real, con 30 s a 20 Mbps |
+| Ritmo | 60,0 fps también con la imagen quieta (repetición por ranuras) |
 | Cierre | limpio en < 100 ms |
+
+Para revisar el diseño sin abrir la app: `& $exe --render-ui "$env:TEMP\rc-ui"` dibuja la ventana de
+Ajustes, el menú de la bandeja y los iconos a PNG.
 
 ## 2. Pruebas manuales con la aplicación
 
@@ -102,7 +106,8 @@ para seguir lo que pasa, y tener abierto un juego en **ventana sin bordes**.
 | 18 | Atajo ocupado | Asignar un atajo que use otra app | Aviso "Atajo ocupado" |
 | 19 | Ajustes | Cambiar fps, bitrate, duración y carpeta; guardar | Se aplican sin reiniciar la app; el siguiente clip refleja los cambios |
 | 20 | Inicio con Windows | Activarlo y reiniciar sesión | La app arranca en la bandeja sin notificación de bienvenida |
-| 21 | Antitrampas | Jugar una partida de League of Legends con Vanguard y la app activa | Vanguard no la bloquea; el clip se guarda. Usar modo monitor o "sin bordes" |
+| 21 | Sonidos | Guardar un clip; iniciar y detener la grabación; desactivar la casilla en Ajustes | "Ding-ding" al guardar, tono agudo al iniciar, dos descendentes al detener; nada con la casilla desactivada |
+| 22 | Antitrampas | Jugar una partida de League of Legends con Vanguard y la app activa | Vanguard no la bloquea; el clip se guarda. Usar modo monitor o "sin bordes" |
 
 ## 3. Medir el consumo
 
