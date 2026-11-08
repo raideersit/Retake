@@ -1,0 +1,16 @@
+<Project>
+  <!-- Configuración común a todos los proyectos de la solución. -->
+  <PropertyGroup>
+    <LangVersion>12.0</LangVersion>
+    <Nullable>enable</Nullable>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <!-- Las advertencias de nulabilidad se tratan como errores: son las que esconden fallos reales. -->
+    <WarningsAsErrors>nullable</WarningsAsErrors>
+    <Platforms>x64</Platforms>
+    <PlatformTarget>x64</PlatformTarget>
+    <Deterministic>true</Deterministic>
+    <Authors>ReplayClip</Authors>
+    <Product>ReplayClip</Product>
+    <Version>0.1.0</Version>
+  </PropertyGroup>
+</Project>

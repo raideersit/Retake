@@ -1,0 +1,59 @@
+Actúa como ingeniero de software senior especializado en aplicaciones nativas de Windows, captura de pantalla, codificación de video por hardware y audio con WASAPI.
+
+CONTEXTO
+- Proyecto: aplicación de escritorio para Windows 10 (versión 1903 o superior, x64) que graba el gameplay y mantiene un búfer de repetición de los últimos 30 segundos, de forma similar a la barra de juegos de Xbox. Nombre provisional: ReplayClip.
+- Uso real: el usuario juega mientras la aplicación corre en segundo plano, incluyendo juegos con antitrampas de kernel como League of Legends (Riot Vanguard). Por eso la captura NO puede inyectar código, enganchar (hook) llamadas gráficas, leer memoria de otros procesos ni instalar drivers.
+- Prioridad principal: consumo mínimo de recursos mientras se juega.
+- GPU desconocida: debe funcionar con NVIDIA (NVENC), AMD (AMF) e Intel (Quick Sync) a través de Media Foundation, con respaldo a codificación por software si no hay codificador por hardware.
+- Stack: C# con .NET 8, WPF para la ventana de ajustes, icono en la bandeja del sistema.
+- Librerías permitidas: Vortice.Windows (Direct3D11, DXGI, Media Foundation), las APIs WinRT de Windows.Graphics.Capture, NAudio (WASAPI loopback y micrófono). Un ejecutable de FFmpeg solo como último recurso para el remux a MP4, y si lo usas debes justificarlo.
+- Entorno de desarrollo: Visual Studio 2022 o `dotnet` CLI en Windows 10/11.
+
+TAREA
+Diseña e implementa la aplicación completa, trabajando por fases, de modo que cada fase compile y funcione antes de pasar a la siguiente.
+
+FUNCIONES REQUERIDAS
+1. Búfer de repetición: mantiene en RAM los últimos N segundos (30 por defecto, configurable entre 15 y 120). Al presionar un atajo global, guarda esos segundos en un MP4.
+2. Grabación completa: otro atajo global inicia y detiene una grabación continua que se escribe a disco en streaming, sin acumularla en RAM.
+3. Fuente de captura: la ventana en primer plano o una ventana elegida por el usuario, o un monitor completo, siempre con Windows.Graphics.Capture. Nada de inyección ni hooks.
+4. Audio: audio del sistema (WASAPI loopback) y micrófono opcional, en pistas separadas dentro del MP4, sincronizadas con el video.
+5. Parámetros configurables: resolución máxima 1080p, 30 o 60 fps, bitrate de 8 a 25 Mbps, carpeta de salida, atajos de teclado (por defecto Ctrl+Shift+F9 para guardar el búfer y Ctrl+Shift+F10 para iniciar/detener la grabación, evitando conflictos con Xbox Game Bar y ShadowPlay).
+6. Interfaz mínima: icono en la bandeja con menú contextual, ventana de ajustes y una notificación al guardar un clip, con la ruta del archivo. Debe poder iniciar con Windows, de forma opcional.
+
+REQUISITOS DE RENDIMIENTO (medibles)
+- Menos de 3 % de CPU y menos de 5 % de GPU extra a 1080p60 con codificación por hardware.
+- Menos de 200 MB de RAM en total con el búfer de 30 s a 20 Mbps.
+- Los fotogramas deben permanecer en la GPU: pasar la textura D3D11 directamente al codificador, sin copiarla a la CPU.
+- Intervalo de fotogramas clave de 1 segundo, para poder cortar el búfer limpiamente.
+
+DISEÑO DEL BÚFER CIRCULAR
+- Guarda muestras ya codificadas (video y audio) con sus marcas de tiempo, indicando cuáles son fotogramas clave.
+- Al guardar, el clip empieza en el primer fotograma clave que caiga dentro de la ventana de N segundos y se empaqueta a MP4 sin recodificar (passthrough con IMFSinkWriter, o remux).
+- Debe ser seguro entre hilos y tener un tope de memoria que descarte lo más antiguo.
+
+ROBUSTEZ
+Maneja cambios de resolución, alt-tab, ventana minimizada o cerrada, pérdida del dispositivo de video, disco lleno, ausencia de micrófono y cierre limpio de la aplicación sin dejar archivos corruptos.
+
+REGLAS
+- No uses inyección de DLL, hooks de DirectX/OpenGL, lectura de memoria de otros procesos, drivers ni servicios de kernel.
+- Sin telemetría ni conexiones de red.
+- No agregues dependencias fuera de las permitidas sin justificarlas.
+- Comenta el código en español, con nombres de clases y métodos claros. Un archivo por responsabilidad (captura, codificación, búfer, audio, muxer, atajos, ajustes, interfaz).
+- Si un dato del contexto es insuficiente o hay una decisión con consecuencias (por ejemplo, el borde amarillo de captura en Windows 10 anteriores a la versión 2104), dilo antes de asumirlo.
+- No cambies de tecnología a mitad del trabajo. Si algo no es viable con el stack indicado, explícalo y propón la alternativa mínima.
+
+SALIDA (por fases)
+1. Arquitectura: diagrama en texto del flujo captura → codificación → búfer → muxer, estructura de carpetas y lista de paquetes NuGet con versiones.
+2. Código completo y compilable de cada módulo, entregado por archivo.
+3. Instrucciones exactas de compilación y ejecución (comandos o pasos en Visual Studio).
+4. Plan de pruebas manuales y cómo medir el consumo de CPU, GPU y RAM.
+Entrega la fase 1 y espera mi confirmación antes de seguir con la fase 2.
+
+VERIFICACIÓN
+Antes de entregar cada fase, comprueba que:
+- el código compile sin advertencias graves y no tenga referencias a APIs inexistentes;
+- el clip guardado dure aproximadamente N segundos (±1 s), tenga audio sincronizado y se reproduzca en un reproductor estándar;
+- el búfer no crezca sin límite tras una hora de ejecución (sin fugas de memoria ni de texturas);
+- la captura funcione con un juego en modo ventana sin bordes;
+- no se use ninguna técnica de inyección ni de hooks.
+Al final, lista las limitaciones conocidas.

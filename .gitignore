@@ -1,0 +1,16 @@
+# Compilación .NET
+bin/
+obj/
+*.user
+*.suo
+.vs/
+*.binlog
+
+# Publicaciones y artefactos
+publish/
+artifacts/
+TestResults/
+
+# Clips de prueba
+*.mp4
+*.mp4.part
