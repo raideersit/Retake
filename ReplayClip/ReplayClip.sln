@@ -11,6 +11,10 @@ Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "tools", "tools", "{34FB1E4D
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "ReplayClip.SmokeTest", "tools\ReplayClip.SmokeTest\ReplayClip.SmokeTest.csproj", "{8EE183BF-219D-4747-9CED-9DEF917DD969}"
 EndProject
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "tests", "tests", "{21144819-C18C-42FC-8737-A4833B6D246D}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "ReplayClip.Tests", "tests\ReplayClip.Tests\ReplayClip.Tests.csproj", "{CBF8F9D1-DBFB-4358-8F3E-1B666F8FDE0F}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -28,9 +32,14 @@ Global
 		{8EE183BF-219D-4747-9CED-9DEF917DD969}.Debug|Any CPU.Build.0 = Debug|x64
 		{8EE183BF-219D-4747-9CED-9DEF917DD969}.Release|Any CPU.ActiveCfg = Release|x64
 		{8EE183BF-219D-4747-9CED-9DEF917DD969}.Release|Any CPU.Build.0 = Release|x64
+		{CBF8F9D1-DBFB-4358-8F3E-1B666F8FDE0F}.Debug|Any CPU.ActiveCfg = Debug|x64
+		{CBF8F9D1-DBFB-4358-8F3E-1B666F8FDE0F}.Debug|Any CPU.Build.0 = Debug|x64
+		{CBF8F9D1-DBFB-4358-8F3E-1B666F8FDE0F}.Release|Any CPU.ActiveCfg = Release|x64
+		{CBF8F9D1-DBFB-4358-8F3E-1B666F8FDE0F}.Release|Any CPU.Build.0 = Release|x64
 	EndGlobalSection
 	GlobalSection(NestedProjects) = preSolution
 		{ED91DF75-8C7B-4A78-B8DB-25EA86A77B40} = {793B0E89-9DF9-439B-9D2A-B2775F85FEF4}
 		{8EE183BF-219D-4747-9CED-9DEF917DD969} = {34FB1E4D-4ED7-4A3F-9BFC-2871F3107648}
+		{CBF8F9D1-DBFB-4358-8F3E-1B666F8FDE0F} = {21144819-C18C-42FC-8737-A4833B6D246D}
 	EndGlobalSection
 EndGlobal

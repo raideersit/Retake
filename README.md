@@ -76,6 +76,7 @@ ReplayClip/
 │  ├─ Settings/  AppSettings, SettingsStore, StartupRegistration
 │  ├─ UI/        TrayIconController, SettingsWindow, ClipNotifier, HotkeyBox
 │  └─ Core/      RecorderEngine, VideoPipeline, EncodedSampleBus, MediaClock, Logger
+├─ tests/ReplayClip.Tests/       pruebas unitarias (xUnit, solo para desarrollo)
 ├─ tools/ReplayClip.SmokeTest/   prueba automática de extremo a extremo (ver docs/PRUEBAS.md)
 └─ tools/Measure-ReplayClip.ps1  medición de CPU, GPU y RAM
 ```

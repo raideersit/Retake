@@ -1,7 +1,27 @@
 # Plan de pruebas y medición (fase 4)
 
-Hay dos niveles: una **prueba automática** que ejecuta el motor real sin interfaz y valida los MP4, y
-**pruebas manuales** con la aplicación y un juego. Al final, cómo medir CPU, GPU y RAM.
+Hay tres niveles: **pruebas unitarias** de la lógica sin hardware, una **prueba automática** que ejecuta
+el motor real sin interfaz y valida los MP4, y **pruebas manuales** con la aplicación y un juego.
+Al final, cómo medir CPU, GPU y RAM.
+
+## 0. Pruebas unitarias (`ReplayClip.Tests`, xUnit)
+
+```powershell
+cd ReplayClip
+dotnet test tests\ReplayClip.Tests\ReplayClip.Tests.csproj
+```
+
+42 pruebas, < 1 s. Cubren:
+
+* **Búfer circular**: el clip empieza en el primer fotograma clave de la ventana y dura N s (−1 s);
+  el audio se recorta al mismo intervalo; tras 10 minutos simulados la memoria no crece; el tope de
+  memoria descarta lo más antiguo; una instantánea conserva sus datos mientras el búfer sigue
+  escribiendo y los devuelve al liberarse; tras reiniciar el codificador solo se usa la generación nueva.
+* **Audio**: relleno de huecos con silencio, descarte de solapes, avance con silencio, saltos enormes
+  (suspensión), mezcla alineada por índice y sin desbordar.
+* **H.264**: localización de NAL, detección de IDR, extracción de SPS/PPS, tipo de slice (I/P/B).
+* **Atajos, ajustes y geometría**: análisis de combinaciones, valores fuera de rango, JSON dañado,
+  tamaño de salida y bandas negras.
 
 ## 1. Prueba automática (`ReplayClip.SmokeTest`)
 
