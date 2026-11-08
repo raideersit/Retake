@@ -18,6 +18,7 @@ public sealed class CaptureTargetResolver
 {
     private readonly AppSettings _settings;
     private IntPtr _lastForegroundSeen;
+    private DateTime _nextSearch = DateTime.MinValue;
 
     public CaptureTargetResolver(AppSettings settings) => _settings = settings;
 
@@ -61,6 +62,9 @@ public sealed class CaptureTargetResolver
 
             default: // Window y Process: reenganchar si la ventana desapareció.
                 if (current is not null && WindowEnumerator.IsAlive(current.Handle)) return null;
+                // Buscar el juego enumera todos los procesos: como mucho cada 2 s mientras no aparezca.
+                if (DateTime.UtcNow < _nextSearch) return null;
+                _nextSearch = DateTime.UtcNow.AddSeconds(2);
                 return Resolve();
         }
     }

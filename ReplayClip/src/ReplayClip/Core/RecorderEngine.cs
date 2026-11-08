@@ -86,6 +86,7 @@ public sealed class RecorderEngine : IDisposable
         {
             var previous = _settings;
             _settings = settings.Clone();
+            if (_settings.OutputFolder != previous.OutputFolder) RecordingWriter.RecoverIncompleteFiles(_settings.OutputFolder);
             _ring?.Configure(_settings.ReplaySeconds, CapacityFor(_settings));
             if (_settings.RequiresPipelineRestart(previous))
             {

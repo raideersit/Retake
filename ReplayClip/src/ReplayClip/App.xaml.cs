@@ -29,14 +29,18 @@ public partial class App : Application
     {
         base.OnStartup(e);
 
-        _singleInstance = new Mutex(true, @"Local\ReplayClip.SingleInstance", out bool isFirst);
+        var mutex = new Mutex(true, @"Local\ReplayClip.SingleInstance", out bool isFirst);
         if (!isFirst)
         {
+            // No es nuestro: se cierra sin liberarlo (ReleaseMutex lanzaría una excepción).
+            mutex.Dispose();
+            _shuttingDown = true;
             MessageBox.Show("ReplayClip ya se está ejecutando (mira la bandeja del sistema).", "ReplayClip",
                 MessageBoxButton.OK, MessageBoxImage.Information);
             Shutdown();
             return;
         }
+        _singleInstance = mutex;
 
         Logger.Start();
         Logger.Info($"ReplayClip {typeof(App).Assembly.GetName().Version} en {Environment.OSVersion} ({Environment.ProcessorCount} CPU).");
@@ -108,6 +112,7 @@ public partial class App : Application
         _hotkeys?.Dispose();
         _engine?.Dispose(); // termina grabación y clips en curso antes de liberar la captura
         _tray?.Dispose();
+        _tray = null; // las notificaciones que lleguen tarde se ignoran
         try { MediaFactory.MFShutdown(); } catch (Exception) { }
         Logger.Info("ReplayClip cerrado.");
         Logger.Flush();
@@ -126,6 +131,7 @@ public partial class App : Application
     {
         Logger.Error("Excepción en el hilo de interfaz", e.Exception);
         e.Handled = true; // la captura sigue; se informa al usuario
+        if (_shuttingDown) return;
         _tray?.Notifier.Show(new EngineNotification(NotificationKind.Error, "Error inesperado", e.Exception.Message));
     }
 
