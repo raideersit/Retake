@@ -5,7 +5,7 @@ namespace ReplayClip.SmokeTest;
 
 /// <summary>Resumen de una pista leída del MP4.</summary>
 public sealed record TrackReport(int Index, string Type, int Samples, int KeyFrames, double FirstSeconds, double LastSeconds,
-    double MaxKeyFrameGapSeconds);
+    double MaxKeyFrameGapSeconds, int BFrames = 0, string SliceTypes = "");
 
 /// <summary>Lee un MP4 con el Source Reader (sin decodificar) y resume sus pistas.</summary>
 public static class Mp4Inspector
@@ -39,6 +39,8 @@ public static class Mp4Inspector
         var last = new double[types.Count];
         var lastKey = Enumerable.Repeat(double.NaN, types.Count).ToArray();
         var maxGap = new double[types.Count];
+        var bFrames = new int[types.Count];
+        var sliceTypes = new Dictionary<char, int>();
 
         while (true)
         {
@@ -47,6 +49,12 @@ public static class Mp4Inspector
             if (sample is null) continue;
             double t = MediaClock.ToSeconds(timestamp);
             counts[stream]++;
+            if (types[stream] == "H.264")
+            {
+                char slice = FirstSliceType(sample);
+                sliceTypes[slice] = sliceTypes.GetValueOrDefault(slice) + 1;
+                if (slice == 'B') bFrames[stream]++;
+            }
             if (double.IsNaN(first[stream])) first[stream] = t;
             last[stream] = t;
             if (sample.GetUInt32(SampleAttributeKeys.CleanPoint, out uint clean).Success && clean != 0)
@@ -57,7 +65,21 @@ public static class Mp4Inspector
             }
         }
 
-        var tracks = types.Select((type, i) => new TrackReport(i, type, counts[i], keys[i], first[i], last[i], maxGap[i])).ToList();
+        var tracks = types.Select((type, i) => new TrackReport(i, type, counts[i], keys[i], first[i], last[i], maxGap[i], bFrames[i], string.Join(" ", sliceTypes.OrderBy(p => p.Key).Select(p => $"{p.Key}={p.Value}")))).ToList();
         return (duration, tracks);
+    }
+
+    private static unsafe char FirstSliceType(IMFSample sample)
+    {
+        using var buffer = sample.ConvertToContiguousBuffer();
+        buffer.Lock(out IntPtr pointer, out _, out int length);
+        try
+        {
+            return ReplayClip.Video.H264Bitstream.FirstSliceType(new ReadOnlySpan<byte>((void*)pointer, length));
+        }
+        finally
+        {
+            buffer.Unlock();
+        }
     }
 }

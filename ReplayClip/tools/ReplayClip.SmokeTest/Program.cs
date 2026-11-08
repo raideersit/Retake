@@ -106,6 +106,7 @@ static void Measure(RecorderEngine engine, Process process, TimeSpan duration, s
         process.Refresh();
         double cpu = (process.TotalProcessorTime - cpuStart).TotalMilliseconds / wall.Elapsed.TotalMilliseconds / Environment.ProcessorCount * 100;
         Console.WriteLine($"  {label}: t={wall.Elapsed.TotalSeconds,5:F0}s CPU={cpu,5:F2}%  privada={process.PrivateMemorySize64 / 1048576,4} MB  " +
+                          $"WS privado={MemoryProbe.PrivateWorkingSetBytes() / 1048576,4} MB  " +
                           $"working set={process.WorkingSet64 / 1048576,4} MB  búfer={engine.BufferedSeconds,5:F1}s/{engine.BufferBytes / 1048576} MB  " +
                           $"GC={GC.GetTotalMemory(false) / 1048576} MB");
         Console.WriteLine($"      {engine.VideoStatistics}");
@@ -120,7 +121,7 @@ static bool Report(string path, double? expected)
     foreach (var t in tracks)
     {
         Console.WriteLine($"  pista {t.Index}: {t.Type,-5} muestras={t.Samples,5} claves={t.KeyFrames,4} " +
-                          $"inicio={t.FirstSeconds:F3}s fin={t.LastSeconds:F3}s máx. entre claves={t.MaxKeyFrameGapSeconds:F2}s");
+                          $"inicio={t.FirstSeconds:F3}s fin={t.LastSeconds:F3}s máx. entre claves={t.MaxKeyFrameGapSeconds:F2}s" + (t.Type == "H.264" ? $" slices {t.SliceTypes}" : ""));
         if (t.Samples == 0) ok = false;
     }
     var video = tracks.FirstOrDefault(t => t.Type == "H.264");
