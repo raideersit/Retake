@@ -90,26 +90,32 @@ public sealed class FramePacer : IDisposable
         return _lastPts;
     }
 
+    /// <summary>
+    /// Ritmo por ranuras: cada 1/fps s hay un hueco (<see cref="_nextDue"/>). Si pasa medio intervalo del
+    /// hueco sin que llegue un fotograma real, se repite el último con el PTS exacto del hueco. Así la
+    /// salida es de fps constantes aunque la imagen esté quieta, y el GOP de fps fotogramas dura 1 s.
+    /// </summary>
     private void WatchdogLoop()
     {
+        long half = _interval / 2;
         while (!_stop.IsSet)
         {
-            WaitInterval();
+            _timer.Wait(half); // revisar dos veces por hueco
             if (_stop.IsSet) break;
-            long now = MediaClock.Now;
-            long last = Volatile.Read(ref _lastSubmitClock);
-            if (last == 0 || now - last < _interval + _interval / 2) continue;
+            if (Volatile.Read(ref _lastSubmitClock) == 0) continue; // aún no hay imagen que repetir
 
             long pts;
             lock (_gate)
             {
-                pts = MonotonicPts(now);
-                _nextDue = now + _interval;
+                long now = MediaClock.Now;
+                if (_nextDue == 0 || now < _nextDue + half) continue;
+                // Tras una pausa larga (suspensión, sistema saturado) no se rellena todo: se resincroniza.
+                if (now - _nextDue > _interval * 4) _nextDue = now - half;
+                pts = MonotonicPts(_nextDue);
+                _nextDue += _interval;
             }
             try { _duplicateRequested(pts); }
             catch (Exception ex) { Logger.Error("Error repitiendo fotograma", ex); }
         }
     }
-
-    private void WaitInterval() => _timer.Wait(_interval);
 }
