@@ -40,6 +40,16 @@ public partial class SettingsWindow : Window
 
     private void OnRefreshClick(object sender, RoutedEventArgs e) => _model.RefreshSources();
 
+    // Barra de título propia (estilo Windows 95): arrastrar, minimizar y cerrar.
+    private void OnTitleBarMouseDown(object sender, System.Windows.Input.MouseButtonEventArgs e)
+    {
+        if (e.ButtonState == System.Windows.Input.MouseButtonState.Pressed) DragMove();
+    }
+
+    private void OnMinimizeClick(object sender, RoutedEventArgs e) => WindowState = WindowState.Minimized;
+
+    private void OnCloseClick(object sender, RoutedEventArgs e) => Close();
+
     private void OnBrowseClick(object sender, RoutedEventArgs e)
     {
         var dialog = new Microsoft.Win32.OpenFolderDialog

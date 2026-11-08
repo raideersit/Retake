@@ -13,6 +13,12 @@ int record = int.Parse(options.GetValueOrDefault("record") ?? "8");
 double soakMinutes = double.Parse(options.GetValueOrDefault("soak-minutes") ?? "0", System.Globalization.CultureInfo.InvariantCulture);
 string? inspectOnly = options.GetValueOrDefault("inspect");
 
+if (options.GetValueOrDefault("render-ui") is string uiFolder)
+{
+    UiPreview.Render(uiFolder);
+    return 0;
+}
+
 Logger.Start();
 MediaFactory.MFStartup(true).CheckError();
 
