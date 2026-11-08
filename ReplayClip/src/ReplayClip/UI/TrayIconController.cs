@@ -20,8 +20,8 @@ public sealed class TrayIconController : IDisposable
 
     public TrayIconController()
     {
-        _idleIcon = CreatePixelIcon(recording: false);
-        _recordingIcon = CreatePixelIcon(recording: true);
+        _idleIcon = CreateLogoIcon(recording: false);
+        _recordingIcon = CreateLogoIcon(recording: true);
 
         _saveItem = new ToolStripMenuItem("Guardar repetición", null, (_, _) => SaveReplayRequested?.Invoke());
         _recordItem = new ToolStripMenuItem("Iniciar grabación", null, (_, _) => ToggleRecordingRequested?.Invoke());
@@ -84,45 +84,49 @@ public sealed class TrayIconController : IDisposable
         DestroyIcon(_recordingIcon);
     }
 
-    /// <summary>
-    /// Icono pixel-art de 16×16 (dibujado a 32×32 con píxeles dobles): un monitor clásico con la pantalla
-    /// azul marino y un punto que es azul en reposo y rojo mientras graba.
-    /// </summary>
-    internal static Icon CreatePixelIcon(bool recording)
-    {
-        var black = Color.Black;
-        var face = Color.FromArgb(0xC0, 0xC0, 0xC0);
-        var white = Color.White;
-        var shadow = Color.FromArgb(0x80, 0x80, 0x80);
-        var navy = Color.FromArgb(0x00, 0x00, 0x80);
-        var dot = recording ? Color.FromArgb(0xFF, 0x00, 0x00) : Color.FromArgb(0x10, 0x84, 0xD0);
+    /// <summary>Ruta del logo dentro del ensamblado (Assets\logo-zorro.png, acción de compilación Resource).</summary>
+    private static readonly Uri LogoUri = new("pack://application:,,,/ReplayClip;component/Assets/logo-zorro.png");
 
-        using var bitmap = new Bitmap(32, 32);
+    /// <summary>
+    /// Icono de la bandeja: el logo del zorro escalado sin suavizado (píxeles nítidos) al tamaño de icono
+    /// pequeño del sistema (16 px al 100 %, 20 px al 125 %...). Mientras graba lleva un punto rojo de "REC"
+    /// en la esquina superior derecha. Se genera dos veces al arrancar y nunca más.
+    /// </summary>
+    internal static Icon CreateLogoIcon(bool recording)
+    {
+        int size = Math.Max(16, SystemInformation.SmallIconSize.Width);
+        using var stream = System.Windows.Application.GetResourceStream(LogoUri).Stream;
+        using var logo = Image.FromStream(stream);
+        using var bitmap = new Bitmap(size, size);
         using (var g = Graphics.FromImage(bitmap))
         {
+            g.InterpolationMode = InterpolationMode.NearestNeighbor;
+            g.PixelOffsetMode = PixelOffsetMode.Half;
             g.SmoothingMode = SmoothingMode.None;
-            g.Clear(Color.Transparent);
-            void Px(Color color, int x, int y, int w = 1, int h = 1)
-            {
-                using var brush = new SolidBrush(color);
-                g.FillRectangle(brush, x * 2, y * 2, w * 2, h * 2);
-            }
-
-            Px(black, 0, 1, 16, 12);   // contorno del monitor
-            Px(face, 1, 2, 14, 10);    // carcasa
-            Px(white, 1, 2, 14, 1);    // relieve superior
-            Px(white, 1, 2, 1, 10);    // relieve izquierdo
-            Px(shadow, 2, 11, 13, 1);  // sombra inferior
-            Px(shadow, 14, 3, 1, 9);   // sombra derecha
-            Px(shadow, 3, 3, 10, 1);   // marco hundido de la pantalla
-            Px(navy, 3, 4, 10, 6);     // pantalla
-            Px(dot, 9, 5, 3, 3);       // punto de estado
-            if (recording) Px(white, 9, 5); // brillo del punto rojo
-            Px(black, 5, 13, 6, 1);    // pie
-            Px(black, 3, 14, 10, 2);   // base
-            Px(face, 4, 14, 8, 1);
+            g.DrawImage(logo, 0, 0, size, size);
+            if (recording) DrawRecordDot(g, size);
         }
         return Icon.FromHandle(bitmap.GetHicon());
+    }
+
+    /// <summary>
+    /// Punto rojo de "REC" en pixel-art (un círculo de 7×7 con borde blanco, fila a fila) en la esquina
+    /// superior derecha. Un FillEllipse tan pequeño y sin suavizado parecería una cruz.
+    /// </summary>
+    private static void DrawRecordDot(Graphics g, int size)
+    {
+        // Anchura de cada fila del círculo exterior (blanco) e interior (rojo), centradas.
+        int[] outer = { 3, 5, 7, 7, 7, 5, 3 };
+        int[] inner = { 0, 3, 5, 5, 5, 3, 0 };
+        int scale = Math.Max(1, size / 16);
+        int left = size - 7 * scale;
+        using var red = new SolidBrush(Color.FromArgb(0xFF, 0x20, 0x20));
+        for (int row = 0; row < outer.Length; row++)
+        {
+            int y = row * scale;
+            g.FillRectangle(Brushes.White, left + (7 - outer[row]) / 2 * scale, y, outer[row] * scale, scale);
+            if (inner[row] > 0) g.FillRectangle(red, left + (7 - inner[row]) / 2 * scale, y, inner[row] * scale, scale);
+        }
     }
 
     /// <summary>Colores del menú clásico: gris, sin degradados, selección azul marino.</summary>

@@ -62,7 +62,7 @@ public static class UiPreview
             int x = 0;
             foreach (bool recording in new[] { false, true })
             {
-                using var icon = TrayIconController.CreatePixelIcon(recording);
+                using var icon = TrayIconController.CreateLogoIcon(recording);
                 using var image = icon.ToBitmap();
                 g.DrawImage(image, x, 0, 128, 128);
                 x += 128 + 16;

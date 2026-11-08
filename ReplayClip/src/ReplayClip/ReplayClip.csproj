@@ -13,6 +13,8 @@
     <UseWindowsForms>true</UseWindowsForms>
     <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
     <ApplicationManifest>app.manifest</ApplicationManifest>
+    <!-- Icono del ejecutable (Explorador, barra de tareas). Se regenera con tools\Build-Icon.ps1. -->
+    <ApplicationIcon>Assets\ReplayClip.ico</ApplicationIcon>
     <RootNamespace>ReplayClip</RootNamespace>
     <AssemblyName>ReplayClip</AssemblyName>
 
@@ -38,6 +40,11 @@
     <PackageReference Include="Vortice.MediaFoundation" Version="3.8.3" />
     <PackageReference Include="NAudio.Wasapi" Version="2.2.1" />
     <PackageReference Include="NAudio.Core" Version="2.2.1" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <!-- Logo dentro del ensamblado: lo usan la bandeja y la barra de título de Ajustes. -->
+    <Resource Include="Assets\logo-zorro.png" />
   </ItemGroup>
 
   <ItemGroup>

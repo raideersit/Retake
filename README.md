@@ -1,3 +1,7 @@
+<p align="center">
+  <img src="ReplayClip/src/ReplayClip/Assets/logo-zorro.png" width="128" alt="Logo de ReplayClip: zorro pixel-art con una cámara">
+</p>
+
 # ReplayClip
 
 Grabador de repeticiones para Windows 10/11: mantiene en RAM los últimos N segundos de juego y los
@@ -80,11 +84,13 @@ ReplayClip/
 │  ├─ Muxing/    Mp4Muxer (IMFSinkWriter passthrough), ClipExporter, RecordingWriter
 │  ├─ Hotkeys/   HotkeyManager (RegisterHotKey), HotkeyGesture
 │  ├─ Settings/  AppSettings, SettingsStore, StartupRegistration
-│  ├─ UI/        TrayIconController, SettingsWindow, ClipNotifier, HotkeyBox
+│  ├─ UI/        TrayIconController, SettingsWindow, Retro95Theme, ClipNotifier, HotkeyBox, SoundCues
+│  ├─ Assets/    logo-zorro.png y ReplayClip.ico (se regenera con tools\Build-Icon.ps1)
 │  └─ Core/      RecorderEngine, VideoPipeline, EncodedSampleBus, MediaClock, Logger
 ├─ tests/ReplayClip.Tests/       pruebas unitarias (xUnit, solo para desarrollo)
 ├─ tools/ReplayClip.SmokeTest/   prueba automática de extremo a extremo (ver docs/PRUEBAS.md)
-└─ tools/Measure-ReplayClip.ps1  medición de CPU, GPU y RAM
+├─ tools/Measure-ReplayClip.ps1  medición de CPU, GPU y RAM
+└─ tools/Build-Icon.ps1          genera el .ico (16–256 px, píxeles nítidos) a partir del logo
 ```
 
 Flujo: captura (GPU) → conversión NV12 y escalado (GPU) → H.264 por hardware → bus de muestras →
