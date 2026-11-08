@@ -62,6 +62,8 @@ public class HotkeyGestureTests
     [InlineData("Ctrl+Shift+F9", ModifierKeys.Control | ModifierKeys.Shift, Key.F9)]
     [InlineData("alt+F10", ModifierKeys.Alt, Key.F10)]
     [InlineData("F13", ModifierKeys.None, Key.F13)]
+    [InlineData("Ctrl+Shift+9", ModifierKeys.Control | ModifierKeys.Shift, Key.D9)]
+    [InlineData("Ctrl+Shift+D0", ModifierKeys.Control | ModifierKeys.Shift, Key.D0)] // formato antiguo
     public void Parses_valid_gestures(string text, ModifierKeys modifiers, Key key)
     {
         Assert.True(HotkeyGesture.TryParse(text, out var gesture));
@@ -77,6 +79,14 @@ public class HotkeyGestureTests
     [InlineData("Ctrl+F9+F10")]   // dos teclas
     [InlineData("Ctrl+Patata")]
     public void Rejects_invalid_gestures(string text) => Assert.False(HotkeyGesture.TryParse(text, out _));
+
+    [Fact]
+    public void Digits_are_shown_without_wpf_prefix()
+    {
+        HotkeyGesture.TryParse("Ctrl+Shift+9", out var gesture);
+        Assert.Equal("Ctrl+Shift+9", gesture.ToString());
+        Assert.Equal(0x39u, gesture.VirtualKey); // '9'
+    }
 
     [Fact]
     public void Native_modifiers_match_RegisterHotKey()

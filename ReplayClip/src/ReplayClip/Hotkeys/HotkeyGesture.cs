@@ -39,7 +39,8 @@ public readonly record struct HotkeyGesture(ModifierKeys Modifiers, Key Key)
         if (Modifiers.HasFlag(ModifierKeys.Shift)) parts.Add("Shift");
         if (Modifiers.HasFlag(ModifierKeys.Alt)) parts.Add("Alt");
         if (Modifiers.HasFlag(ModifierKeys.Windows)) parts.Add("Win");
-        parts.Add(Key.ToString());
+        // Las teclas numéricas se llaman D0..D9 en WPF; se muestran como "0".."9".
+        parts.Add(Key is >= Key.D0 and <= Key.D9 ? ((int)(Key - Key.D0)).ToString() : Key.ToString());
         return string.Join("+", parts);
     }
 
@@ -58,7 +59,9 @@ public readonly record struct HotkeyGesture(ModifierKeys Modifiers, Key Key)
                 case "alt": modifiers |= ModifierKeys.Alt; break;
                 case "win" or "windows": modifiers |= ModifierKeys.Windows; break;
                 default:
-                    if (key != Key.None || !Enum.TryParse(raw, ignoreCase: true, out key)) return false;
+                    if (key != Key.None) return false;
+                    if (raw.Length == 1 && char.IsAsciiDigit(raw[0])) key = Key.D0 + (raw[0] - '0');
+                    else if (!Enum.TryParse(raw, ignoreCase: true, out key) || int.TryParse(raw, out _)) return false;
                     break;
             }
         }
