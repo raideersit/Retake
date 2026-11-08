@@ -37,6 +37,7 @@ public sealed class SettingsViewModel : INotifyPropertyChanged
         CaptureMicrophone = settings.CaptureMicrophone;
         CaptureCursor = settings.CaptureCursor;
         StartWithWindows = settings.StartWithWindows;
+        UseDesktopDuplication = settings.UseDesktopDuplication;
 
         RefreshSources();
         SelectedMonitor = Monitors.FirstOrDefault(m => m.Value == settings.MonitorDeviceName) ?? Monitors.FirstOrDefault();
@@ -127,6 +128,8 @@ public sealed class SettingsViewModel : INotifyPropertyChanged
     public bool CaptureCursor { get; set; }
 
     public bool StartWithWindows { get; set; }
+
+    public bool UseDesktopDuplication { get; set; }
 
     /// <summary>"RAM estimada del búfer: 80 MB".</summary>
     public string MemoryEstimate
@@ -220,6 +223,7 @@ public sealed class SettingsViewModel : INotifyPropertyChanged
             MicrophoneDeviceId = SelectedMicrophone?.Value ?? "",
             CaptureCursor = CaptureCursor,
             StartWithWindows = StartWithWindows,
+            UseDesktopDuplication = UseDesktopDuplication,
         }.Normalize();
     }
 

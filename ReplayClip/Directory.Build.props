@@ -8,6 +8,8 @@
     <WarningsAsErrors>nullable</WarningsAsErrors>
     <Platforms>x64</Platforms>
     <PlatformTarget>x64</PlatformTarget>
+    <!-- Misma carpeta de salida (bin\Debug, bin\Release) compilando la solución o un proyecto suelto. -->
+    <AppendPlatformToOutputPath>false</AppendPlatformToOutputPath>
     <Deterministic>true</Deterministic>
     <Authors>ReplayClip</Authors>
     <Product>ReplayClip</Product>

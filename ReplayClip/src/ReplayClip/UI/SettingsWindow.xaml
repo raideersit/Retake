@@ -61,6 +61,9 @@
                 <ComboBox ItemsSource="{Binding ModeChoices}" SelectedValuePath="Value" SelectedValue="{Binding CaptureMode}" />
                 <ComboBox ItemsSource="{Binding Monitors}" SelectedItem="{Binding SelectedMonitor}"
                           Visibility="{Binding IsMonitorMode, Converter={StaticResource BoolToVisibility}}" />
+                <CheckBox Content="Capturar el monitor sin borde amarillo (Desktop Duplication)"
+                          IsChecked="{Binding UseDesktopDuplication}"
+                          Visibility="{Binding IsMonitorMode, Converter={StaticResource BoolToVisibility}}" />
                 <DockPanel Visibility="{Binding IsWindowMode, Converter={StaticResource BoolToVisibility}}">
                     <Button DockPanel.Dock="Right" Content="Actualizar" Margin="6,3,0,3" Padding="8,0" Click="OnRefreshClick" />
                     <ComboBox x:Name="WindowCombo" ItemsSource="{Binding Windows}" SelectedItem="{Binding SelectedWindow}" />
@@ -72,7 +75,7 @@
                 </DockPanel>
                 <CheckBox Content="Grabar el cursor (Windows 10 2004 o superior)" IsChecked="{Binding CaptureCursor}" />
                 <TextBlock TextWrapping="Wrap" Foreground="Gray" Margin="0,4,0,0"
-                           Text="En Windows 10 aparece un borde amarillo alrededor de lo capturado; es obligatorio en el sistema y no sale en el video." />
+                           Text="Al capturar una ventana, Windows 10 dibuja un borde amarillo a su alrededor (obligatorio en el sistema; no sale en el video). La captura de monitor completo no lo muestra." />
             </StackPanel>
         </GroupBox>
 

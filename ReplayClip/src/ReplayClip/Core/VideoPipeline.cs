@@ -6,7 +6,8 @@ using Vortice.Direct3D11;
 namespace ReplayClip.Core;
 
 /// <summary>
-/// Cadena de video de una sesión: dispositivo D3D11 → captura WGC → conversión NV12 → ritmo → H.264.
+/// Cadena de video de una sesión: dispositivo D3D11 → captura (Desktop Duplication para monitores,
+/// Windows.Graphics.Capture para ventanas) → conversión NV12 → ritmo → H.264.
 /// Todo ocurre en la GPU; a la CPU solo llegan los bytes ya comprimidos. Se recrea entera si se pierde
 /// el dispositivo o cambian los ajustes de video.
 /// </summary>
@@ -16,7 +17,9 @@ public sealed class VideoPipeline : IDisposable
     private readonly VideoFrameConverter _converter;
     private readonly H264Encoder _encoder;
     private readonly FramePacer _pacer;
-    private readonly GraphicsCaptureSource _capture;
+    private readonly GraphicsCaptureSource _graphicsCapture;
+    private readonly DesktopDuplicationSource? _duplication;
+    private volatile ICaptureSource? _active;
     private volatile bool _failed;
     private long _framesArrived;
     private long _framesAccepted;
@@ -54,8 +57,13 @@ public sealed class VideoPipeline : IDisposable
             _encoder.Failed += _ => _failed = true;
             _converter = new VideoFrameConverter(_device, width, height);
             _pacer = new FramePacer(fps, OnDuplicateRequested);
-            _capture = new GraphicsCaptureSource(_device, settings.CaptureCursor, OnFrameCaptured);
-            _capture.TargetClosed += t => TargetClosed?.Invoke(t);
+            _graphicsCapture = new GraphicsCaptureSource(_device, settings.CaptureCursor, OnFrameCaptured);
+            _graphicsCapture.TargetClosed += t => TargetClosed?.Invoke(t);
+            if (settings.UseDesktopDuplication)
+            {
+                _duplication = new DesktopDuplicationSource(_device, fps, settings.CaptureCursor, OnFrameCaptured);
+                _duplication.TargetClosed += t => TargetClosed?.Invoke(t);
+            }
         }
         catch
         {
@@ -73,12 +81,15 @@ public sealed class VideoPipeline : IDisposable
 
     public bool IsSoftwareFallback { get; }
 
-    public CaptureTarget? CurrentTarget => _capture.CurrentTarget;
+    public CaptureTarget? CurrentTarget => _active?.CurrentTarget;
+
+    /// <summary>Método de captura en uso ("Desktop Duplication (sin borde)" o "Windows.Graphics.Capture").</summary>
+    public string CaptureMethod => _active?.MethodName ?? "ninguno";
 
     /// <summary>Texto para la interfaz: "Intel Quick Sync (hardware) — 1920x1080 60 fps".</summary>
     public string Description =>
         $"{_encoder.Name} ({(_encoder.IsHardware ? "hardware" : "software")}, {(_encoder.UsesGpuInput ? "sin copias" : "con copia a CPU")}) — " +
-        $"{_converter.OutputWidth}x{_converter.OutputHeight} {_pacer.FramesPerSecond} fps — GPU: {_device.Adapter.Name}";
+        $"{_converter.OutputWidth}x{_converter.OutputHeight} {_pacer.FramesPerSecond} fps — GPU: {_device.Adapter.Name} — captura: {CaptureMethod}";
 
     /// <summary>Contadores de diagnóstico (captura → codificador).</summary>
     public string Statistics =>
@@ -91,10 +102,30 @@ public sealed class VideoPipeline : IDisposable
     /// <summary>Cambia de ventana o monitor sin reiniciar el codificador (la salida mantiene su tamaño).</summary>
     public void SwitchTarget(CaptureTarget target)
     {
+        StopCapture();
         _converter.ResetInputCache();
+
+        // Monitores: Desktop Duplication (sin borde amarillo). Si no está disponible (p. ej. el monitor
+        // cuelga de otra GPU), se usa Windows.Graphics.Capture.
+        if (target.IsMonitor && _duplication is not null)
+        {
+            try
+            {
+                _duplication.Start(target);
+                _active = _duplication;
+                return;
+            }
+            catch (Exception ex)
+            {
+                Logger.Warn($"Desktop Duplication no disponible ({ex.Message}); se usa Windows.Graphics.Capture.");
+                _duplication.Stop();
+            }
+        }
+
         try
         {
-            _capture.Start(target);
+            _graphicsCapture.Start(target);
+            _active = _graphicsCapture;
         }
         catch (Exception ex)
         {
@@ -106,7 +137,7 @@ public sealed class VideoPipeline : IDisposable
     /// <summary>Detiene la captura y emite imagen negra (objetivo cerrado o aún inexistente).</summary>
     public void ShowBlack()
     {
-        _capture.Stop();
+        StopCapture();
         var slot = _converter.ShowBlack(_encoder.IsSlotFree);
         if (slot is null) return;
         _encoder.Submit(slot, _pacer.ClaimPts(MediaClock.Now));
@@ -119,11 +150,19 @@ public sealed class VideoPipeline : IDisposable
     {
         if (_disposed) return;
         _disposed = true;
-        _capture.Dispose();
+        _duplication?.Dispose();
+        _graphicsCapture.Dispose();
         _pacer.Dispose();
         _encoder.Dispose();
         _converter.Dispose();
         _device.Dispose();
+    }
+
+    private void StopCapture()
+    {
+        _active = null;
+        _duplication?.Stop();
+        _graphicsCapture.Stop();
     }
 
     private void OnFrameCaptured(ID3D11Texture2D texture, int width, int height, long systemTime)

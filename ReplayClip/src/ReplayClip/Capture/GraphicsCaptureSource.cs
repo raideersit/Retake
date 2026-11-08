@@ -12,13 +12,10 @@ namespace ReplayClip.Capture;
 /// de Windows (DWM) entrega cada fotograma como textura D3D11 en nuestro dispositivo. No toca el
 /// proceso capturado: ni inyección, ni hooks, ni lectura de memoria.
 /// </summary>
-public sealed class GraphicsCaptureSource : IDisposable
+public sealed class GraphicsCaptureSource : ICaptureSource
 {
-    /// <summary>Firma del receptor de fotogramas. La textura solo es válida durante la llamada.</summary>
-    public delegate void FrameHandler(ID3D11Texture2D texture, int contentWidth, int contentHeight, long systemTime);
-
     private readonly D3DDeviceManager _device;
-    private readonly FrameHandler _onFrame;
+    private readonly CaptureFrameHandler _onFrame;
     private readonly bool _captureCursor;
     private readonly object _gate = new();
     private GraphicsCaptureItem? _item;
@@ -27,7 +24,9 @@ public sealed class GraphicsCaptureSource : IDisposable
     private SizeInt32 _poolSize;
     private bool _disposed;
 
-    public GraphicsCaptureSource(D3DDeviceManager device, bool captureCursor, FrameHandler onFrame)
+    public string MethodName => "Windows.Graphics.Capture";
+
+    public GraphicsCaptureSource(D3DDeviceManager device, bool captureCursor, CaptureFrameHandler onFrame)
     {
         _device = device;
         _captureCursor = captureCursor;

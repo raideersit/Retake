@@ -19,6 +19,7 @@ MediaFactory.MFStartup(true).CheckError();
 if (inspectOnly is not null)
 {
     Report(inspectOnly, null);
+    if (options.GetValueOrDefault("png") is string png) FrameExtractor.SavePng(inspectOnly, 5, png);
     return 0;
 }
 
@@ -32,6 +33,8 @@ var settings = new AppSettings
     TargetProcessName = options.GetValueOrDefault("process") ?? "",
     CaptureSystemAudio = true,
     CaptureMicrophone = options.ContainsKey("mic"),
+    UseDesktopDuplication = !options.ContainsKey("wgc"),
+    CaptureCursor = !options.ContainsKey("nocursor"),
 }.Normalize();
 
 Console.WriteLine($"Salida: {outDir}  Repetición: {replay} s  Modo: {settings.CaptureMode}  Mic: {settings.CaptureMicrophone}");

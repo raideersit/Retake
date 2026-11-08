@@ -1,4 +1,3 @@
-using System.Runtime.InteropServices;
 using ReplayClip.Core;
 
 namespace ReplayClip.Capture;
@@ -17,7 +16,7 @@ public sealed class FramePacer : IDisposable
     private readonly long _interval;
     private readonly Action<long> _duplicateRequested;
     private readonly Thread _watchdog;
-    private readonly IntPtr _timer;
+    private readonly HighResolutionTimer _timer = new();
     private readonly ManualResetEventSlim _stop = new(false);
     private readonly object _gate = new();
     private long _nextDue;
@@ -31,12 +30,6 @@ public sealed class FramePacer : IDisposable
         FramesPerSecond = framesPerSecond;
         _interval = MediaClock.TicksPerSecond / framesPerSecond;
         _duplicateRequested = duplicateRequested;
-        _timer = CreateWaitableTimerExW(IntPtr.Zero, null, CreateWaitableTimerHighResolution, TimerAllAccess);
-        if (_timer == IntPtr.Zero)
-        {
-            // Windows anterior a 1803: temporizador normal (menos preciso, igual de válido).
-            _timer = CreateWaitableTimerExW(IntPtr.Zero, null, 0, TimerAllAccess);
-        }
         _watchdog = new Thread(WatchdogLoop) { IsBackground = true, Name = "ReplayClip.FramePacer", Priority = ThreadPriority.AboveNormal };
         _watchdog.Start();
     }
@@ -85,7 +78,7 @@ public sealed class FramePacer : IDisposable
     {
         _stop.Set();
         _watchdog.Join(1000);
-        if (_timer != IntPtr.Zero) CloseHandle(_timer);
+        _timer.Dispose();
         _stop.Dispose();
     }
 
@@ -118,37 +111,5 @@ public sealed class FramePacer : IDisposable
         }
     }
 
-    private void WaitInterval()
-    {
-        if (_timer == IntPtr.Zero)
-        {
-            _stop.Wait(TimeSpan.FromTicks(_interval));
-            return;
-        }
-        long due = -_interval; // negativo = relativo, en 100 ns
-        if (SetWaitableTimerEx(_timer, ref due, 0, IntPtr.Zero, IntPtr.Zero, IntPtr.Zero, 0))
-        {
-            WaitForSingleObject(_timer, 1000);
-        }
-        else
-        {
-            _stop.Wait(TimeSpan.FromTicks(_interval));
-        }
-    }
-
-    private const uint CreateWaitableTimerHighResolution = 0x00000002;
-    private const uint TimerAllAccess = 0x1F0003;
-
-    [DllImport("kernel32.dll", SetLastError = true, CharSet = CharSet.Unicode)]
-    private static extern IntPtr CreateWaitableTimerExW(IntPtr attributes, string? name, uint flags, uint access);
-
-    [DllImport("kernel32.dll", SetLastError = true)]
-    private static extern bool SetWaitableTimerEx(IntPtr timer, ref long dueTime, int period, IntPtr completion,
-        IntPtr completionArg, IntPtr wakeContext, uint tolerableDelay);
-
-    [DllImport("kernel32.dll")]
-    private static extern uint WaitForSingleObject(IntPtr handle, uint milliseconds);
-
-    [DllImport("kernel32.dll")]
-    private static extern bool CloseHandle(IntPtr handle);
+    private void WaitInterval() => _timer.Wait(_interval);
 }

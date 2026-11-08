@@ -66,6 +66,12 @@ public sealed class AppSettings
 
     public bool StartWithWindows { get; set; } = false;
 
+    /// <summary>
+    /// Modo monitor con Desktop Duplication (sin borde amarillo en Windows 10). Si se desactiva, o si no está
+    /// disponible, se usa Windows.Graphics.Capture.
+    /// </summary>
+    public bool UseDesktopDuplication { get; set; } = true;
+
     public static string DefaultOutputFolder =>
         Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.MyVideos), "ReplayClip");
 
@@ -112,5 +118,6 @@ public sealed class AppSettings
         || CaptureSystemAudio != other.CaptureSystemAudio
         || CaptureMicrophone != other.CaptureMicrophone
         || MicrophoneDeviceId != other.MicrophoneDeviceId
-        || CaptureCursor != other.CaptureCursor;
+        || CaptureCursor != other.CaptureCursor
+        || UseDesktopDuplication != other.UseDesktopDuplication;
 }
