@@ -72,6 +72,9 @@ public sealed class AppSettings
     /// </summary>
     public bool UseDesktopDuplication { get; set; } = true;
 
+    /// <summary>Sonido corto al guardar un clip y al iniciar o detener la grabación.</summary>
+    public bool PlaySounds { get; set; } = true;
+
     public static string DefaultOutputFolder =>
         Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.MyVideos), "ReplayClip");
 

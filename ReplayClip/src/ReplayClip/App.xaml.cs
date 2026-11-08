@@ -22,6 +22,7 @@ public partial class App : Application
     private RecorderEngine? _engine;
     private HotkeyManager? _hotkeys;
     private TrayIconController? _tray;
+    private SoundCues? _sounds;
     private SettingsWindow? _settingsWindow;
     private bool _shuttingDown;
 
@@ -79,7 +80,12 @@ public partial class App : Application
         _tray.ExitRequested += () => Shutdown();
 
         _engine = new RecorderEngine(_settings);
-        _engine.Notification += n => Dispatcher.BeginInvoke(() => _tray?.Notifier.Show(n));
+        _sounds = new SoundCues();
+        _engine.Notification += n => Dispatcher.BeginInvoke(() =>
+        {
+            if (_settings.PlaySounds && !_shuttingDown) _sounds?.Play(n.Sound);
+            _tray?.Notifier.Show(n);
+        });
         _engine.StatusChanged += () => Dispatcher.BeginInvoke(UpdateTray);
         _engine.Start();
 
@@ -113,6 +119,8 @@ public partial class App : Application
         _engine?.Dispose(); // termina grabación y clips en curso antes de liberar la captura
         _tray?.Dispose();
         _tray = null; // las notificaciones que lleguen tarde se ignoran
+        _sounds?.Dispose();
+        _sounds = null;
         try { MediaFactory.MFShutdown(); } catch (Exception) { }
         Logger.Info("ReplayClip cerrado.");
         Logger.Flush();

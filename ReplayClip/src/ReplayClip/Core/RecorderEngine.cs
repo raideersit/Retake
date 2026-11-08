@@ -9,8 +9,12 @@ namespace ReplayClip.Core;
 /// <summary>Tipo de aviso para la interfaz.</summary>
 public enum NotificationKind { Info, Success, Warning, Error }
 
-/// <summary>Aviso que la interfaz muestra como notificación de la bandeja.</summary>
-public sealed record EngineNotification(NotificationKind Kind, string Title, string Message, string? FilePath = null);
+/// <summary>Sonido de confirmación asociado a un aviso.</summary>
+public enum NotificationSound { None, ClipSaved, RecordingStarted, RecordingStopped, Error }
+
+/// <summary>Aviso que la interfaz muestra como notificación de la bandeja (y, si procede, con un sonido).</summary>
+public sealed record EngineNotification(NotificationKind Kind, string Title, string Message, string? FilePath = null,
+    NotificationSound Sound = NotificationSound.None);
 
 /// <summary>
 /// Orquestador: crea y vigila las cadenas de video y audio, mantiene el búfer de repetición y atiende
@@ -118,7 +122,8 @@ public sealed class RecorderEngine : IDisposable
             folder = _settings.OutputFolder;
             if (snapshot is null)
             {
-                Notify(NotificationKind.Warning, "Aún no hay video", "El búfer todavía está vacío; prueba en unos segundos.");
+                Notify(NotificationKind.Warning, "Aún no hay video", "El búfer todavía está vacío; prueba en unos segundos.",
+                    sound: NotificationSound.Error);
                 return;
             }
             _pendingSave = ExportAndNotifyAsync(snapshot, folder);
@@ -149,11 +154,12 @@ public sealed class RecorderEngine : IDisposable
                 _recording = writer;
                 _bus.Subscribe(writer);
                 _video?.RequestKeyFrame(); // empezar sin esperar al siguiente IDR
-                Notify(NotificationKind.Info, "Grabando", "Grabación continua iniciada. Pulsa el atajo otra vez para detenerla.");
+                Notify(NotificationKind.Info, "Grabando", "Grabación continua iniciada. Pulsa el atajo otra vez para detenerla.",
+                    sound: NotificationSound.RecordingStarted);
             }
             catch (Exception ex) when (ex is IOException or UnauthorizedAccessException)
             {
-                Notify(NotificationKind.Error, "No se pudo grabar", ex.Message);
+                Notify(NotificationKind.Error, "No se pudo grabar", ex.Message, sound: NotificationSound.Error);
             }
         }
         StatusChanged?.Invoke();
@@ -312,8 +318,8 @@ public sealed class RecorderEngine : IDisposable
             writer.Dispose();
             if (!notify) return;
             string? path = files.Count > 0 ? files[^1] : null;
-            if (reason is not null) Notify(NotificationKind.Warning, "Grabación detenida", reason, path);
-            else if (path is not null) Notify(NotificationKind.Success, "Grabación guardada", path, path);
+            if (reason is not null) Notify(NotificationKind.Warning, "Grabación detenida", reason, path, NotificationSound.Error);
+            else if (path is not null) Notify(NotificationKind.Success, "Grabación guardada", path, path, NotificationSound.RecordingStopped);
         });
         if (!notify) task.Wait(TimeSpan.FromSeconds(15));
         StatusChanged?.Invoke();
@@ -324,20 +330,21 @@ public sealed class RecorderEngine : IDisposable
         try
         {
             string path = await ClipExporter.ExportAsync(snapshot, folder).ConfigureAwait(false);
-            Notify(NotificationKind.Success, "Clip guardado", path, path);
+            Notify(NotificationKind.Success, "Clip guardado", path, path, NotificationSound.ClipSaved);
         }
         catch (Exception ex)
         {
             Logger.Error("No se pudo guardar el clip", ex);
-            Notify(NotificationKind.Error, "No se pudo guardar el clip", ex.Message);
+            Notify(NotificationKind.Error, "No se pudo guardar el clip", ex.Message, sound: NotificationSound.Error);
         }
     }
 
     private int NextGeneration() => Interlocked.Increment(ref _generation);
 
-    private void Notify(NotificationKind kind, string title, string message, string? path = null)
+    private void Notify(NotificationKind kind, string title, string message, string? path = null,
+        NotificationSound sound = NotificationSound.None)
     {
-        try { Notification?.Invoke(new EngineNotification(kind, title, message, path)); }
+        try { Notification?.Invoke(new EngineNotification(kind, title, message, path, sound)); }
         catch (Exception ex) { Logger.Error("Error mostrando una notificación", ex); }
     }
 }

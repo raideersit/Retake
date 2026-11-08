@@ -38,6 +38,7 @@ public sealed class SettingsViewModel : INotifyPropertyChanged
         CaptureCursor = settings.CaptureCursor;
         StartWithWindows = settings.StartWithWindows;
         UseDesktopDuplication = settings.UseDesktopDuplication;
+        PlaySounds = settings.PlaySounds;
 
         RefreshSources();
         SelectedMonitor = Monitors.FirstOrDefault(m => m.Value == settings.MonitorDeviceName) ?? Monitors.FirstOrDefault();
@@ -130,6 +131,8 @@ public sealed class SettingsViewModel : INotifyPropertyChanged
     public bool StartWithWindows { get; set; }
 
     public bool UseDesktopDuplication { get; set; }
+
+    public bool PlaySounds { get; set; }
 
     /// <summary>"RAM estimada del búfer: 80 MB".</summary>
     public string MemoryEstimate
@@ -224,6 +227,7 @@ public sealed class SettingsViewModel : INotifyPropertyChanged
             CaptureCursor = CaptureCursor,
             StartWithWindows = StartWithWindows,
             UseDesktopDuplication = UseDesktopDuplication,
+            PlaySounds = PlaySounds,
         }.Normalize();
     }
 

@@ -96,7 +96,7 @@
                     <ColumnDefinition Width="Auto" />
                 </Grid.ColumnDefinitions>
                 <Grid.RowDefinitions>
-                    <RowDefinition /><RowDefinition /><RowDefinition /><RowDefinition />
+                    <RowDefinition /><RowDefinition /><RowDefinition /><RowDefinition /><RowDefinition />
                 </Grid.RowDefinitions>
                 <TextBlock Text="Guardar repetición" />
                 <ui:HotkeyBox Grid.Column="1" GestureText="{Binding SaveHotkey}" Margin="0,3" />
@@ -106,6 +106,9 @@
                 <TextBox Grid.Row="2" Grid.Column="1" Text="{Binding OutputFolder}" Margin="0,3" />
                 <Button Grid.Row="2" Grid.Column="2" Content="Examinar…" Margin="6,3,0,3" Padding="8,0" Click="OnBrowseClick" />
                 <CheckBox Grid.Row="3" Grid.ColumnSpan="3" Content="Iniciar con Windows" IsChecked="{Binding StartWithWindows}" />
+                <CheckBox Grid.Row="4" Grid.ColumnSpan="3" IsChecked="{Binding PlaySounds}"
+                          Content="Sonido al guardar un clip y al iniciar o detener la grabación"
+                          ToolTip="El sonido sale por los altavoces, así que también queda en el audio del sistema de los clips siguientes." />
             </Grid>
         </GroupBox>
 

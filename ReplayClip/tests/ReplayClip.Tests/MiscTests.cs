@@ -163,6 +163,23 @@ public class SettingsTests
     }
 }
 
+public class SoundCuesTests
+{
+    [Fact]
+    public void Builds_a_valid_short_wav()
+    {
+        byte[] wav = ReplayClip.UI.SoundCues.Build((880, 70), (0, 25), (1318.5, 110));
+        Assert.Equal("RIFF", System.Text.Encoding.ASCII.GetString(wav, 0, 4));
+        Assert.Equal("WAVE", System.Text.Encoding.ASCII.GetString(wav, 8, 4));
+        int dataBytes = BitConverter.ToInt32(wav, 40);
+        Assert.Equal(wav.Length - 44, dataBytes);
+        Assert.InRange(dataBytes / 2 / 44_100.0, 0.20, 0.21);      // 205 ms
+        short peak = 0;
+        for (int i = 44; i < wav.Length; i += 2) peak = Math.Max(peak, Math.Abs(BitConverter.ToInt16(wav, i)));
+        Assert.InRange(peak, 5000, 8000);                           // suave: ~22 % del máximo
+    }
+}
+
 public class GeometryTests
 {
     [Theory]
