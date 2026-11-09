@@ -17,6 +17,7 @@ hooks, lectura de memoria ni drivers** (compatible con antitrampas de kernel com
 | Audio | Pista 1 mezcla · pista 2 sistema · pista 3 micrófono (AAC 48 kHz) |
 | Interfaz | Estilo retro Windows 95: icono pixel-art en la bandeja, menú clásico, ventana de ajustes; notificación con la ruta del clip; inicio con Windows |
 | Sonidos | Tono corto al guardar un clip y al iniciar/detener la grabación (desactivable) |
+| Editor de clips | Bandeja → *Editor de clips…*: une varios clips, recorta (marcar inicio/fin), divide, reordena y elige transición entre tramos (corte, disolver, fundido a negro, barrido); exporta a `Editado_*.mp4` recodificando con la GPU si la hay (solo la pista de audio 1, la mezcla) |
 
 Los atajos se cambian en *Ajustes → Atajos y archivos*: haz clic en la casilla, pulsa la combinación y
 **Guardar**. En teclados 60 % (sin fila de funciones) F9/F10 dependen de la capa Fn y a veces no llegan a

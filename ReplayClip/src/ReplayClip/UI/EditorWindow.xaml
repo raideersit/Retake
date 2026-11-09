@@ -1,0 +1,173 @@
+<Window x:Class="ReplayClip.UI.EditorWindow"
+        xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        xmlns:ui="clr-namespace:ReplayClip.UI"
+        Title="ReplayClip — Editor de clips" Width="900" Height="660" MinWidth="760" MinHeight="560"
+        Icon="/ReplayClip;component/Assets/logo-zorro.png"
+        WindowStyle="None" ResizeMode="CanResizeWithGrip" WindowStartupLocation="CenterScreen"
+        Background="{DynamicResource Retro.Face}" UseLayoutRounding="True" SnapsToDevicePixels="True"
+        TextOptions.TextFormattingMode="Display" TextOptions.TextRenderingMode="Aliased"
+        FontFamily="Microsoft Sans Serif" FontSize="11" AllowDrop="True" Drop="OnDrop">
+    <Window.Resources>
+        <ResourceDictionary>
+            <ResourceDictionary.MergedDictionaries>
+                <ResourceDictionary Source="/ReplayClip;component/UI/Retro95Theme.xaml" />
+            </ResourceDictionary.MergedDictionaries>
+            <BooleanToVisibilityConverter x:Key="BoolToVisibility" />
+        </ResourceDictionary>
+    </Window.Resources>
+
+    <!-- Marco de ventana clásico en relieve -->
+    <Border BorderBrush="{StaticResource Retro.Light}" BorderThickness="1,1,0,0">
+        <Border BorderBrush="{StaticResource Retro.DarkShadow}" BorderThickness="0,0,1,1">
+            <Border BorderBrush="{StaticResource Retro.Highlight}" BorderThickness="1,1,0,0">
+                <Border BorderBrush="{StaticResource Retro.Shadow}" BorderThickness="0,0,1,1" Padding="2">
+                    <DockPanel>
+
+                        <!-- Barra de título -->
+                        <Grid DockPanel.Dock="Top" Height="18" Background="{StaticResource Retro.TitleBar}"
+                              MouseLeftButtonDown="OnTitleBarMouseDown">
+                            <StackPanel Orientation="Horizontal" VerticalAlignment="Center" Margin="2,0,0,0">
+                                <Image Source="/ReplayClip;component/Assets/logo-zorro.png" Width="16" Height="16" Margin="0,0,4,0"
+                                       RenderOptions.BitmapScalingMode="NearestNeighbor" />
+                                <TextBlock Text="ReplayClip — Editor de clips" Foreground="{StaticResource Retro.OnPrimary}"
+                                           FontWeight="Bold" VerticalAlignment="Center" />
+                            </StackPanel>
+                            <StackPanel Orientation="Horizontal" HorizontalAlignment="Right" VerticalAlignment="Center" Margin="0,0,2,0">
+                                <Button Style="{StaticResource Retro.TitleButton}" Content="0" Click="OnMinimizeClick" ToolTip="Minimizar" />
+                                <Button Style="{StaticResource Retro.TitleButton}" Content="1" Click="OnMaximizeClick" ToolTip="Maximizar" />
+                                <Button Style="{StaticResource Retro.TitleButton}" Content="r" Click="OnCloseClick" Margin="2,0,0,0" ToolTip="Cerrar" />
+                            </StackPanel>
+                        </Grid>
+
+                        <!-- Barra de estado hundida -->
+                        <Border DockPanel.Dock="Bottom" Margin="0,6,0,0" BorderBrush="{StaticResource Retro.Shadow}" BorderThickness="1,1,0,0">
+                            <Border BorderBrush="{StaticResource Retro.Highlight}" BorderThickness="0,0,1,1" Padding="4,2">
+                                <TextBlock Text="{Binding Status}" TextWrapping="Wrap" />
+                            </Border>
+                        </Border>
+
+                        <!-- Exportación -->
+                        <DockPanel DockPanel.Dock="Bottom" Margin="8,6,8,0" LastChildFill="True">
+                            <StackPanel DockPanel.Dock="Right" Orientation="Horizontal">
+                                <Button Content="Abrir carpeta" Margin="6,0,0,0" Click="OnOpenFolderClick" />
+                                <Button Content="Cancelar exportación" Margin="6,0,0,0" Click="OnCancelExportClick"
+                                        Visibility="{Binding IsExporting, Converter={StaticResource BoolToVisibility}}" />
+                                <Button Content="Exportar video" Margin="6,0,0,0" IsDefault="True" Click="OnExportClick"
+                                        IsEnabled="{Binding IsIdle}" />
+                            </StackPanel>
+                            <ProgressBar Minimum="0" Maximum="1" Value="{Binding Progress}" VerticalAlignment="Center" />
+                        </DockPanel>
+
+                        <Grid Margin="8,8,8,0">
+                            <Grid.ColumnDefinitions>
+                                <ColumnDefinition Width="*" />
+                                <ColumnDefinition Width="300" />
+                            </Grid.ColumnDefinitions>
+
+                            <!-- Izquierda: vista previa y tramo seleccionado -->
+                            <DockPanel Grid.Column="0" Margin="0,0,8,0">
+                                <GroupBox DockPanel.Dock="Bottom" Header="Tramo seleccionado" IsEnabled="{Binding IsIdle}">
+                                    <Grid DataContext="{Binding Selected}" IsEnabled="{Binding DataContext.HasSelection, RelativeSource={RelativeSource AncestorType=Window}}">
+                                        <Grid.ColumnDefinitions>
+                                            <ColumnDefinition Width="Auto" />
+                                            <ColumnDefinition Width="90" />
+                                            <ColumnDefinition Width="Auto" />
+                                            <ColumnDefinition Width="90" />
+                                            <ColumnDefinition Width="*" />
+                                        </Grid.ColumnDefinitions>
+                                        <Grid.RowDefinitions>
+                                            <RowDefinition /><RowDefinition /><RowDefinition />
+                                        </Grid.RowDefinitions>
+
+                                        <TextBlock Text="Inicio:" VerticalAlignment="Center" Margin="0,0,6,0" />
+                                        <TextBox Grid.Column="1" Margin="0,2" Text="{Binding InText, UpdateSourceTrigger=LostFocus}"
+                                                 ToolTip="Minutos:segundos, p. ej. 0:12.5" KeyDown="OnTimeBoxKeyDown" />
+                                        <TextBlock Grid.Column="2" Text="Fin:" VerticalAlignment="Center" Margin="12,0,6,0" />
+                                        <TextBox Grid.Column="3" Margin="0,2" Text="{Binding OutText, UpdateSourceTrigger=LostFocus}"
+                                                 ToolTip="Minutos:segundos, p. ej. 0:30.0" KeyDown="OnTimeBoxKeyDown" />
+                                        <TextBlock Grid.Column="4" Text="{Binding Summary}" VerticalAlignment="Center" Margin="12,0,0,0"
+                                                   TextTrimming="CharacterEllipsis" />
+
+                                        <TextBlock Grid.Row="1" Text="Transición:" VerticalAlignment="Center" Margin="0,0,6,0" />
+                                        <ComboBox Grid.Row="1" Grid.Column="1" Grid.ColumnSpan="3" Margin="0,2"
+                                                  ItemsSource="{Binding DataContext.TransitionChoices, RelativeSource={RelativeSource AncestorType=Window}}"
+                                                  SelectedValuePath="Value" SelectedValue="{Binding Transition}"
+                                                  ToolTip="Cómo se pasa de este tramo al siguiente" />
+
+                                        <TextBlock Grid.Row="2" Text="Duración:" VerticalAlignment="Center" Margin="0,0,6,0" />
+                                        <Slider Grid.Row="2" Grid.Column="1" Grid.ColumnSpan="3" Minimum="0.2" Maximum="3" TickFrequency="0.1"
+                                                IsSnapToTickEnabled="True" Value="{Binding TransitionSeconds}"
+                                                IsEnabled="{Binding HasTransitionDuration}" />
+                                        <TextBlock Grid.Row="2" Grid.Column="4" Margin="12,0,0,0" VerticalAlignment="Center"
+                                                   Text="{Binding TransitionSeconds, StringFormat={}{0:0.0} s}" />
+                                    </Grid>
+                                </GroupBox>
+
+                                <GroupBox Header="Vista previa">
+                                    <DockPanel>
+                                        <StackPanel DockPanel.Dock="Bottom" Orientation="Horizontal" Margin="0,4,0,0" IsEnabled="{Binding HasSelection}">
+                                            <Button x:Name="PlayButton" Content="Reproducir" MinWidth="80" Click="OnPlayClick" />
+                                            <Button Content="Ver tramo" Margin="6,0,0,0" Click="OnPlaySegmentClick"
+                                                    ToolTip="Reproduce solo desde el inicio hasta el fin marcados" />
+                                            <Button Content="[ Marcar inicio" Margin="12,0,0,0" Click="OnMarkInClick" IsEnabled="{Binding IsIdle}"
+                                                    ToolTip="El tramo empieza en la posición actual" />
+                                            <Button Content="Marcar fin ]" Margin="6,0,0,0" Click="OnMarkOutClick" IsEnabled="{Binding IsIdle}"
+                                                    ToolTip="El tramo termina en la posición actual" />
+                                            <Button Content="Dividir aquí" Margin="12,0,0,0" Click="OnSplitClick" IsEnabled="{Binding IsIdle}"
+                                                    ToolTip="Parte el tramo en dos en la posición actual" />
+                                        </StackPanel>
+                                        <DockPanel DockPanel.Dock="Bottom" Margin="0,4,0,0">
+                                            <TextBlock x:Name="PositionText" DockPanel.Dock="Right" Width="110" TextAlignment="Right"
+                                                       VerticalAlignment="Center" Text="0:00.0 / 0:00.0" />
+                                            <Slider x:Name="PositionSlider" Minimum="0" Maximum="1" SmallChange="0.1" LargeChange="1"
+                                                    ValueChanged="OnPositionSliderChanged" />
+                                        </DockPanel>
+                                        <!-- Pantalla hundida con fondo negro -->
+                                        <Border BorderBrush="{StaticResource Retro.Shadow}" BorderThickness="1,1,0,0">
+                                            <Border BorderBrush="{StaticResource Retro.Highlight}" BorderThickness="0,0,1,1">
+                                                <Border BorderBrush="{StaticResource Retro.DarkShadow}" BorderThickness="1,1,0,0" Background="Black">
+                                                    <Grid>
+                                                        <MediaElement x:Name="Player" LoadedBehavior="Manual" UnloadedBehavior="Close"
+                                                                      ScrubbingEnabled="True" Stretch="Uniform"
+                                                                      MediaOpened="OnMediaOpened" MediaFailed="OnMediaFailed" MediaEnded="OnMediaEnded" />
+                                                        <TextBlock Text="Selecciona un tramo para verlo aquí" Foreground="{StaticResource Retro.OnPrimary}"
+                                                                   HorizontalAlignment="Center" VerticalAlignment="Center"
+                                                                   Visibility="{Binding NoSelection, Converter={StaticResource BoolToVisibility}}" />
+                                                    </Grid>
+                                                </Border>
+                                            </Border>
+                                        </Border>
+                                    </DockPanel>
+                                </GroupBox>
+                            </DockPanel>
+
+                            <!-- Derecha: el montaje -->
+                            <GroupBox Grid.Column="1" Header="Montaje (de arriba abajo)">
+                                <DockPanel>
+                                    <TextBlock DockPanel.Dock="Bottom" Text="{Binding TotalText}" Margin="0,6,0,0" TextWrapping="Wrap" />
+                                    <UniformGrid DockPanel.Dock="Bottom" Columns="2" Margin="0,4,0,0" IsEnabled="{Binding IsIdle}">
+                                        <Button Content="Agregar clips..." Margin="0,0,3,3" Click="OnAddClick" />
+                                        <Button Content="Quitar" Margin="3,0,0,3" Click="OnRemoveClick" IsEnabled="{Binding HasSelection}" />
+                                        <Button Content="Subir" Margin="0,3,3,0" Click="OnMoveUpClick" IsEnabled="{Binding HasSelection}" />
+                                        <Button Content="Bajar" Margin="3,3,0,0" Click="OnMoveDownClick" IsEnabled="{Binding HasSelection}" />
+                                    </UniformGrid>
+                                    <ListBox ItemsSource="{Binding Segments}" SelectedItem="{Binding Selected}" IsEnabled="{Binding IsIdle}">
+                                        <ListBox.ItemTemplate>
+                                            <DataTemplate>
+                                                <StackPanel Margin="0,1">
+                                                    <TextBlock Text="{Binding Title}" FontWeight="Bold" TextTrimming="CharacterEllipsis" />
+                                                    <TextBlock Text="{Binding Summary}" TextTrimming="CharacterEllipsis" />
+                                                </StackPanel>
+                                            </DataTemplate>
+                                        </ListBox.ItemTemplate>
+                                    </ListBox>
+                                </DockPanel>
+                            </GroupBox>
+                        </Grid>
+                    </DockPanel>
+                </Border>
+            </Border>
+        </Border>
+    </Border>
+</Window>

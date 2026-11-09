@@ -36,6 +36,7 @@ public sealed class TrayIconController : IDisposable
         menu.Items.Add(_saveItem);
         menu.Items.Add(_recordItem);
         menu.Items.Add(new ToolStripSeparator());
+        menu.Items.Add(new ToolStripMenuItem("Editor de clips…", null, (_, _) => EditorRequested?.Invoke()));
         menu.Items.Add(new ToolStripMenuItem("Abrir carpeta de clips", null, (_, _) => OpenFolderRequested?.Invoke()));
         menu.Items.Add(new ToolStripMenuItem("Ajustes…", null, (_, _) => SettingsRequested?.Invoke()));
         menu.Items.Add(new ToolStripSeparator());
@@ -55,6 +56,7 @@ public sealed class TrayIconController : IDisposable
     public event Action? SaveReplayRequested;
     public event Action? ToggleRecordingRequested;
     public event Action? OpenFolderRequested;
+    public event Action? EditorRequested;
     public event Action? SettingsRequested;
     public event Action? ExitRequested;
 

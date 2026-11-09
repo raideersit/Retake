@@ -533,6 +533,87 @@
         </Setter>
     </Style>
 
+    <!-- Lista: campo hundido con selección índigo (editor de clips) -->
+    <Style TargetType="ListBox">
+        <Setter Property="FontFamily" Value="{StaticResource Retro.Font}" />
+        <Setter Property="FontSize" Value="11" />
+        <Setter Property="Foreground" Value="{StaticResource Retro.Text}" />
+        <Setter Property="Background" Value="{StaticResource Retro.Window}" />
+        <Setter Property="SnapsToDevicePixels" Value="True" />
+        <Setter Property="ScrollViewer.HorizontalScrollBarVisibility" Value="Disabled" />
+        <Setter Property="Template">
+            <Setter.Value>
+                <ControlTemplate TargetType="ListBox">
+                    <Border BorderBrush="{StaticResource Retro.Shadow}" BorderThickness="1,1,0,0">
+                        <Border BorderBrush="{StaticResource Retro.Highlight}" BorderThickness="0,0,1,1">
+                            <Border BorderBrush="{StaticResource Retro.DarkShadow}" BorderThickness="1,1,0,0">
+                                <Border BorderBrush="{StaticResource Retro.Light}" BorderThickness="0,0,1,1"
+                                        Background="{TemplateBinding Background}">
+                                    <ScrollViewer Focusable="False" Padding="1">
+                                        <ItemsPresenter />
+                                    </ScrollViewer>
+                                </Border>
+                            </Border>
+                        </Border>
+                    </Border>
+                </ControlTemplate>
+            </Setter.Value>
+        </Setter>
+    </Style>
+
+    <Style TargetType="ListBoxItem">
+        <Setter Property="FontFamily" Value="{StaticResource Retro.Font}" />
+        <Setter Property="FontSize" Value="11" />
+        <Setter Property="Padding" Value="3,2" />
+        <Setter Property="FocusVisualStyle" Value="{x:Null}" />
+        <Setter Property="Template">
+            <Setter.Value>
+                <ControlTemplate TargetType="ListBoxItem">
+                    <Border x:Name="Row" Padding="{TemplateBinding Padding}" Background="Transparent">
+                        <ContentPresenter x:Name="Text" TextElement.Foreground="{StaticResource Retro.Text}" />
+                    </Border>
+                    <ControlTemplate.Triggers>
+                        <Trigger Property="IsSelected" Value="True">
+                            <Setter TargetName="Row" Property="Background" Value="{StaticResource Retro.Selection}" />
+                            <Setter TargetName="Text" Property="TextElement.Foreground" Value="{StaticResource Retro.OnPrimary}" />
+                        </Trigger>
+                    </ControlTemplate.Triggers>
+                </ControlTemplate>
+            </Setter.Value>
+        </Setter>
+    </Style>
+
+    <!-- Barra de progreso clásica: bloques índigo en un surco hundido -->
+    <Style TargetType="ProgressBar">
+        <Setter Property="Height" Value="18" />
+        <Setter Property="Foreground" Value="{StaticResource Retro.Primary}" />
+        <Setter Property="SnapsToDevicePixels" Value="True" />
+        <Setter Property="Template">
+            <Setter.Value>
+                <ControlTemplate TargetType="ProgressBar">
+                    <Border BorderBrush="{StaticResource Retro.Shadow}" BorderThickness="1,1,0,0">
+                        <Border BorderBrush="{StaticResource Retro.Highlight}" BorderThickness="0,0,1,1"
+                                Background="{StaticResource Retro.Face}" Padding="2">
+                            <Grid>
+                                <Border x:Name="PART_Track" />
+                                <Border x:Name="PART_Indicator" HorizontalAlignment="Left">
+                                    <Border.Background>
+                                        <!-- Bloques de 8 px con 2 px de separación, como en Windows 95 -->
+                                        <DrawingBrush TileMode="Tile" Viewport="0,0,10,10" ViewportUnits="Absolute" Stretch="None">
+                                            <DrawingBrush.Drawing>
+                                                <GeometryDrawing Brush="{StaticResource Retro.Primary}" Geometry="M0,0 H8 V10 H0 Z" />
+                                            </DrawingBrush.Drawing>
+                                        </DrawingBrush>
+                                    </Border.Background>
+                                </Border>
+                            </Grid>
+                        </Border>
+                    </Border>
+                </ControlTemplate>
+            </Setter.Value>
+        </Setter>
+    </Style>
+
     <!-- Panel hundido (barra de estado) -->
     <Style x:Key="Retro.StatusPanel" TargetType="Border">
         <Setter Property="BorderBrush" Value="{StaticResource Retro.Shadow}" />

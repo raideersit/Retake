@@ -24,6 +24,7 @@ public partial class App : Application
     private TrayIconController? _tray;
     private SoundCues? _sounds;
     private SettingsWindow? _settingsWindow;
+    private EditorWindow? _editorWindow;
     private bool _shuttingDown;
 
     protected override void OnStartup(StartupEventArgs e)
@@ -77,6 +78,7 @@ public partial class App : Application
         _tray.ToggleRecordingRequested += ToggleRecording;
         _tray.OpenFolderRequested += OpenOutputFolder;
         _tray.SettingsRequested += ShowSettings;
+        _tray.EditorRequested += ShowEditor;
         _tray.ExitRequested += () => Shutdown();
 
         _engine = new RecorderEngine(_settings);
@@ -115,6 +117,7 @@ public partial class App : Application
         _shuttingDown = true;
         Logger.Info("Cerrando ReplayClip…");
         _settingsWindow?.Close();
+        _editorWindow?.Close();
         _hotkeys?.Dispose();
         _engine?.Dispose(); // termina grabación y clips en curso antes de liberar la captura
         _tray?.Dispose();
@@ -195,6 +198,21 @@ public partial class App : Application
         };
         _settingsWindow.Show();
         _settingsWindow.Activate();
+    }
+
+    private void ShowEditor()
+    {
+        if (_editorWindow is not null)
+        {
+            if (_editorWindow.WindowState == WindowState.Minimized) _editorWindow.WindowState = WindowState.Normal;
+            _editorWindow.Activate();
+            return;
+        }
+        // La carpeta y el bitrate se leen al exportar, por si se cambian los ajustes con el editor abierto.
+        _editorWindow = new EditorWindow(() => (_settings.OutputFolder, _settings.BitrateMbps));
+        _editorWindow.Closed += (_, _) => _editorWindow = null;
+        _editorWindow.Show();
+        _editorWindow.Activate();
     }
 
     private void ApplySettings(AppSettings settings)
