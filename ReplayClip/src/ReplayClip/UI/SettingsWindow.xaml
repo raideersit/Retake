@@ -5,7 +5,7 @@
         Title="ReplayClip — Ajustes" Width="520" SizeToContent="Height"
         Icon="/ReplayClip;component/Assets/logo-zorro.png"
         WindowStyle="None" ResizeMode="NoResize" WindowStartupLocation="CenterScreen"
-        Background="#C0C0C0" UseLayoutRounding="True" SnapsToDevicePixels="True"
+        Background="{DynamicResource Retro.Face}" UseLayoutRounding="True" SnapsToDevicePixels="True"
         TextOptions.TextFormattingMode="Display" TextOptions.TextRenderingMode="Aliased"
         FontFamily="Microsoft Sans Serif" FontSize="11">
     <Window.Resources>
@@ -31,7 +31,7 @@
                                 <!-- Logo pixel-art (escalado sin suavizado para que los píxeles queden nítidos) -->
                                 <Image Source="/ReplayClip;component/Assets/logo-zorro.png" Width="16" Height="16" Margin="0,0,4,0"
                                        RenderOptions.BitmapScalingMode="NearestNeighbor" />
-                                <TextBlock Text="ReplayClip — Ajustes" Foreground="White" FontWeight="Bold" VerticalAlignment="Center" />
+                                <TextBlock Text="ReplayClip — Ajustes" Foreground="{StaticResource Retro.OnPrimary}" FontWeight="Bold" VerticalAlignment="Center" />
                             </StackPanel>
                             <StackPanel Orientation="Horizontal" HorizontalAlignment="Right" VerticalAlignment="Center" Margin="0,0,2,0">
                                 <Button Style="{StaticResource Retro.TitleButton}" Content="0" Click="OnMinimizeClick" ToolTip="Minimizar" />

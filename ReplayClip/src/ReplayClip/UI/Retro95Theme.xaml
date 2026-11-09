@@ -1,5 +1,5 @@
 <!--
-  Tema retro estilo Windows 95/98: gris clásico, relieves 3D de 2 px, selección azul marino y fuente
+  Tema retro estilo Windows 95/98 con paleta Dark Indigo + lavanda: relieves 3D de 2 px, selección índigo y fuente
   MS Sans Serif sin suavizado. Solo lo usa la ventana de Ajustes, que existe únicamente mientras está
   abierta: cerrada, el tema no ocupa memoria ni CPU. Todo son plantillas estáticas, sin animaciones.
 -->
@@ -7,24 +7,33 @@
                     xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
                     xmlns:ui="clr-namespace:ReplayClip.UI">
 
-    <!-- Paleta clásica -->
-    <SolidColorBrush x:Key="Retro.Face" Color="#C0C0C0" />
-    <SolidColorBrush x:Key="Retro.Highlight" Color="#FFFFFF" />
-    <SolidColorBrush x:Key="Retro.Light" Color="#DFDFDF" />
-    <SolidColorBrush x:Key="Retro.Shadow" Color="#808080" />
-    <SolidColorBrush x:Key="Retro.DarkShadow" Color="#0A0A0A" />
-    <SolidColorBrush x:Key="Retro.Window" Color="#FFFFFF" />
-    <SolidColorBrush x:Key="Retro.Selection" Color="#000080" />
+    <!-- Paleta Dark Indigo + lavanda. Los valores viven en RetroPalette.cs; aquí solo se crean los pinceles.
+         Se mantienen las claves clásicas (Retro.Face, Retro.Shadow…) que usan las plantillas. -->
+    <SolidColorBrush x:Key="Retro.Face" Color="{x:Static ui:RetroPalette.Surface}" />
+    <SolidColorBrush x:Key="Retro.Highlight" Color="{x:Static ui:RetroPalette.BevelHighlight}" />
+    <SolidColorBrush x:Key="Retro.Light" Color="{x:Static ui:RetroPalette.BevelLight}" />
+    <SolidColorBrush x:Key="Retro.Shadow" Color="{x:Static ui:RetroPalette.BevelShadow}" />
+    <SolidColorBrush x:Key="Retro.DarkShadow" Color="{x:Static ui:RetroPalette.BevelDarkShadow}" />
+    <SolidColorBrush x:Key="Retro.Window" Color="{x:Static ui:RetroPalette.Background}" />
+    <SolidColorBrush x:Key="Retro.Selection" Color="{x:Static ui:RetroPalette.Primary}" />
+    <!-- Tokens semánticos -->
+    <SolidColorBrush x:Key="Retro.Primary" Color="{x:Static ui:RetroPalette.Primary}" />
+    <SolidColorBrush x:Key="Retro.OnPrimary" Color="{x:Static ui:RetroPalette.OnPrimary}" />
+    <SolidColorBrush x:Key="Retro.Accent" Color="{x:Static ui:RetroPalette.Accent}" />
+    <SolidColorBrush x:Key="Retro.Surface" Color="{x:Static ui:RetroPalette.Surface}" />
+    <SolidColorBrush x:Key="Retro.Background" Color="{x:Static ui:RetroPalette.Background}" />
+    <SolidColorBrush x:Key="Retro.Text" Color="{x:Static ui:RetroPalette.Text}" />
+    <SolidColorBrush x:Key="Retro.TextDisabled" Color="{x:Static ui:RetroPalette.TextDisabled}" />
     <LinearGradientBrush x:Key="Retro.TitleBar" StartPoint="0,0" EndPoint="1,0">
-        <GradientStop Color="#000080" Offset="0" />
-        <GradientStop Color="#1084D0" Offset="1" />
+        <GradientStop Color="{x:Static ui:RetroPalette.Primary}" Offset="0" />
+        <GradientStop Color="{x:Static ui:RetroPalette.PrimaryGradientEnd}" Offset="1" />
     </LinearGradientBrush>
     <!-- Trama de puntos de las barras de desplazamiento clásicas -->
     <DrawingBrush x:Key="Retro.Dither" TileMode="Tile" Viewport="0,0,2,2" ViewportUnits="Absolute" Stretch="None">
         <DrawingBrush.Drawing>
             <DrawingGroup>
-                <GeometryDrawing Brush="#C0C0C0" Geometry="M0,0 H2 V2 H0 Z" />
-                <GeometryDrawing Brush="#FFFFFF" Geometry="M0,0 H1 V1 H0 Z M1,1 H2 V2 H1 Z" />
+                <GeometryDrawing Brush="{StaticResource Retro.Face}" Geometry="M0,0 H2 V2 H0 Z" />
+                <GeometryDrawing Brush="{StaticResource Retro.Highlight}" Geometry="M0,0 H1 V1 H0 Z M1,1 H2 V2 H1 Z" />
             </DrawingGroup>
         </DrawingBrush.Drawing>
     </DrawingBrush>
@@ -35,7 +44,7 @@
         <Setter Property="Control.Template">
             <Setter.Value>
                 <ControlTemplate>
-                    <Rectangle Margin="4" Stroke="Black" StrokeThickness="1" StrokeDashArray="1 1" SnapsToDevicePixels="True" />
+                    <Rectangle Margin="4" Stroke="{StaticResource Retro.Text}" StrokeThickness="1" StrokeDashArray="1 1" SnapsToDevicePixels="True" />
                 </ControlTemplate>
             </Setter.Value>
         </Setter>
@@ -45,14 +54,14 @@
     <Style TargetType="TextBlock">
         <Setter Property="FontFamily" Value="{StaticResource Retro.Font}" />
         <Setter Property="FontSize" Value="11" />
-        <Setter Property="Foreground" Value="Black" />
+        <Setter Property="Foreground" Value="{StaticResource Retro.Text}" />
     </Style>
 
     <!-- Botón con relieve; hundido al pulsarlo; marco negro extra si es el predeterminado -->
     <Style x:Key="Retro.ButtonBase" TargetType="ButtonBase">
         <Setter Property="FontFamily" Value="{StaticResource Retro.Font}" />
         <Setter Property="FontSize" Value="11" />
-        <Setter Property="Foreground" Value="Black" />
+        <Setter Property="Foreground" Value="{StaticResource Retro.Text}" />
         <Setter Property="Background" Value="{StaticResource Retro.Face}" />
         <Setter Property="Padding" Value="8,3" />
         <Setter Property="BorderThickness" Value="0" />
@@ -139,10 +148,10 @@
         <Setter Property="FontFamily" Value="{StaticResource Retro.Font}" />
         <Setter Property="FontSize" Value="11" />
         <Setter Property="Background" Value="{StaticResource Retro.Window}" />
-        <Setter Property="Foreground" Value="Black" />
+        <Setter Property="Foreground" Value="{StaticResource Retro.Text}" />
         <Setter Property="MinHeight" Value="21" />
         <Setter Property="SelectionBrush" Value="{StaticResource Retro.Selection}" />
-        <Setter Property="CaretBrush" Value="Black" />
+        <Setter Property="CaretBrush" Value="{StaticResource Retro.Text}" />
         <Setter Property="Template" Value="{StaticResource Retro.SunkenField}" />
     </Style>
 
@@ -153,7 +162,7 @@
     <Style TargetType="CheckBox">
         <Setter Property="FontFamily" Value="{StaticResource Retro.Font}" />
         <Setter Property="FontSize" Value="11" />
-        <Setter Property="Foreground" Value="Black" />
+        <Setter Property="Foreground" Value="{StaticResource Retro.Text}" />
         <Setter Property="SnapsToDevicePixels" Value="True" />
         <Setter Property="FocusVisualStyle" Value="{x:Null}" />
         <Setter Property="Template">
@@ -165,13 +174,13 @@
                                 <Border BorderBrush="{StaticResource Retro.DarkShadow}" BorderThickness="1,1,0,0">
                                     <Border x:Name="Box" BorderBrush="{StaticResource Retro.Light}" BorderThickness="0,0,1,1"
                                             Background="{StaticResource Retro.Window}">
-                                        <Path x:Name="Check" Visibility="Collapsed" Fill="Black" Margin="1"
+                                        <Path x:Name="Check" Visibility="Collapsed" Fill="{StaticResource Retro.Text}" Margin="1"
                                               Data="M0,2 L2,4 L6,0 L6,2 L2,6 L0,4 Z" />
                                     </Border>
                                 </Border>
                             </Border>
                         </Border>
-                        <Border x:Name="Label" Margin="5,0,0,0" Padding="1,0" BorderBrush="Black" BorderThickness="0">
+                        <Border x:Name="Label" Margin="5,0,0,0" Padding="1,0" BorderBrush="{StaticResource Retro.Text}" BorderThickness="0">
                             <ContentPresenter VerticalAlignment="Center" RecognizesAccessKey="True" />
                         </Border>
                     </StackPanel>
@@ -199,7 +208,7 @@
     <Style TargetType="GroupBox">
         <Setter Property="FontFamily" Value="{StaticResource Retro.Font}" />
         <Setter Property="FontSize" Value="11" />
-        <Setter Property="Foreground" Value="Black" />
+        <Setter Property="Foreground" Value="{StaticResource Retro.Text}" />
         <Setter Property="Padding" Value="8" />
         <Setter Property="SnapsToDevicePixels" Value="True" />
         <Setter Property="Template">
@@ -234,7 +243,7 @@
                             <Border x:Name="I1" BorderBrush="{StaticResource Retro.Highlight}" BorderThickness="1,1,0,0">
                                 <Border x:Name="I2" BorderBrush="{StaticResource Retro.Shadow}" BorderThickness="0,0,1,1"
                                         Background="{StaticResource Retro.Face}">
-                                    <Path Fill="Black" Data="{TemplateBinding Content}" HorizontalAlignment="Center" VerticalAlignment="Center" />
+                                    <Path Fill="{StaticResource Retro.Text}" Data="{TemplateBinding Content}" HorizontalAlignment="Center" VerticalAlignment="Center" />
                                 </Border>
                             </Border>
                         </Border>
@@ -362,7 +371,7 @@
                             <Border x:Name="I1" BorderBrush="{StaticResource Retro.Highlight}" BorderThickness="1,1,0,0">
                                 <Border x:Name="I2" BorderBrush="{StaticResource Retro.Shadow}" BorderThickness="0,0,1,1"
                                         Background="{StaticResource Retro.Face}">
-                                    <Path Fill="Black" Data="M0,0 L7,0 L3.5,4 Z" HorizontalAlignment="Center" VerticalAlignment="Center" />
+                                    <Path Fill="{StaticResource Retro.Text}" Data="M0,0 L7,0 L3.5,4 Z" HorizontalAlignment="Center" VerticalAlignment="Center" />
                                 </Border>
                             </Border>
                         </Border>
@@ -395,7 +404,7 @@
     <Style TargetType="ComboBox">
         <Setter Property="FontFamily" Value="{StaticResource Retro.Font}" />
         <Setter Property="FontSize" Value="11" />
-        <Setter Property="Foreground" Value="Black" />
+        <Setter Property="Foreground" Value="{StaticResource Retro.Text}" />
         <Setter Property="MinHeight" Value="21" />
         <Setter Property="SnapsToDevicePixels" Value="True" />
         <Setter Property="ScrollViewer.HorizontalScrollBarVisibility" Value="Disabled" />
@@ -438,7 +447,7 @@
                         <Popup x:Name="PART_Popup" Placement="Bottom" AllowsTransparency="False" Focusable="False"
                                IsOpen="{TemplateBinding IsDropDownOpen}" PopupAnimation="None">
                             <Border MinWidth="{TemplateBinding ActualWidth}" MaxHeight="{TemplateBinding MaxDropDownHeight}"
-                                    Background="{StaticResource Retro.Window}" BorderBrush="Black" BorderThickness="1">
+                                    Background="{StaticResource Retro.Window}" BorderBrush="{StaticResource Retro.Text}" BorderThickness="1">
                                 <ScrollViewer SnapsToDevicePixels="True">
                                     <ItemsPresenter KeyboardNavigation.DirectionalNavigation="Contained" />
                                 </ScrollViewer>
@@ -458,7 +467,7 @@
                                 <Condition Property="IsDropDownOpen" Value="False" />
                             </MultiTrigger.Conditions>
                             <Setter TargetName="SelectionBox" Property="Background" Value="{StaticResource Retro.Selection}" />
-                            <Setter TargetName="ContentSite" Property="TextElement.Foreground" Value="White" />
+                            <Setter TargetName="ContentSite" Property="TextElement.Foreground" Value="{StaticResource Retro.OnPrimary}" />
                         </MultiTrigger>
                         <Trigger Property="IsEnabled" Value="False">
                             <Setter TargetName="Field" Property="Background" Value="{StaticResource Retro.Face}" />
@@ -478,12 +487,12 @@
             <Setter.Value>
                 <ControlTemplate TargetType="ComboBoxItem">
                     <Border x:Name="Row" Padding="{TemplateBinding Padding}" Background="Transparent">
-                        <ContentPresenter x:Name="Text" TextElement.Foreground="Black" />
+                        <ContentPresenter x:Name="Text" TextElement.Foreground="{StaticResource Retro.Text}" />
                     </Border>
                     <ControlTemplate.Triggers>
                         <Trigger Property="IsHighlighted" Value="True">
                             <Setter TargetName="Row" Property="Background" Value="{StaticResource Retro.Selection}" />
-                            <Setter TargetName="Text" Property="TextElement.Foreground" Value="White" />
+                            <Setter TargetName="Text" Property="TextElement.Foreground" Value="{StaticResource Retro.OnPrimary}" />
                         </Trigger>
                     </ControlTemplate.Triggers>
                 </ControlTemplate>

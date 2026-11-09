@@ -129,26 +129,30 @@ public sealed class TrayIconController : IDisposable
         }
     }
 
-    /// <summary>Colores del menú clásico: gris, sin degradados, selección azul marino.</summary>
+    /// <summary>Colores del menú clásico desde <see cref="RetroPalette"/>: cara lavanda, sin degradados, selección índigo.</summary>
     private sealed class RetroMenuColors : ProfessionalColorTable
     {
-        private static readonly Color Face = Color.FromArgb(0xC0, 0xC0, 0xC0);
-        private static readonly Color Navy = Color.FromArgb(0x00, 0x00, 0x80);
+        internal static readonly Color Face = RetroPalette.ToDrawing(RetroPalette.Surface);
+        internal static readonly Color Primary = RetroPalette.ToDrawing(RetroPalette.Primary);
+        internal static readonly Color OnPrimary = RetroPalette.ToDrawing(RetroPalette.OnPrimary);
+        internal static readonly Color Text = RetroPalette.ToDrawing(RetroPalette.Text);
+        internal static readonly Color Shadow = RetroPalette.ToDrawing(RetroPalette.BevelShadow);
+        internal static readonly Color Highlight = RetroPalette.ToDrawing(RetroPalette.BevelHighlight);
 
         public override Color ToolStripDropDownBackground => Face;
         public override Color ImageMarginGradientBegin => Face;
         public override Color ImageMarginGradientMiddle => Face;
         public override Color ImageMarginGradientEnd => Face;
-        public override Color MenuItemSelected => Navy;
-        public override Color MenuItemSelectedGradientBegin => Navy;
-        public override Color MenuItemSelectedGradientEnd => Navy;
-        public override Color MenuItemBorder => Navy;
-        public override Color MenuBorder => Color.Black;
-        public override Color SeparatorDark => Color.FromArgb(0x80, 0x80, 0x80);
-        public override Color SeparatorLight => Color.White;
+        public override Color MenuItemSelected => Primary;
+        public override Color MenuItemSelectedGradientBegin => Primary;
+        public override Color MenuItemSelectedGradientEnd => Primary;
+        public override Color MenuItemBorder => Primary;
+        public override Color MenuBorder => Text;
+        public override Color SeparatorDark => Shadow;
+        public override Color SeparatorLight => Highlight;
     }
 
-    /// <summary>Dibuja el menú como en Windows 95: borde en relieve y texto blanco sobre la selección.</summary>
+    /// <summary>Dibuja el menú como en Windows 95: borde en relieve y texto lavanda sobre la selección.</summary>
     private sealed class RetroMenuRenderer : ToolStripProfessionalRenderer
     {
         public RetroMenuRenderer() : base(new RetroMenuColors())
@@ -158,21 +162,33 @@ public sealed class TrayIconController : IDisposable
 
         protected override void OnRenderItemText(ToolStripItemTextRenderEventArgs e)
         {
-            e.TextColor = e.Item.Selected ? Color.White : Color.Black;
+            e.TextColor = e.Item.Selected ? RetroMenuColors.OnPrimary : RetroMenuColors.Text;
             base.OnRenderItemText(e);
         }
 
         protected override void OnRenderToolStripBorder(ToolStripRenderEventArgs e)
         {
-            ControlPaint.DrawBorder3D(e.Graphics, new Rectangle(Point.Empty, e.ToolStrip.Size), Border3DStyle.Raised);
+            // Relieve clásico con los tonos de la paleta (DrawBorder3D usaría los grises del sistema).
+            var g = e.Graphics;
+            int w = e.ToolStrip.Width - 1, h = e.ToolStrip.Height - 1;
+            using var light = new Pen(RetroMenuColors.Highlight);
+            using var shadow = new Pen(RetroMenuColors.Shadow);
+            using var dark = new Pen(RetroMenuColors.Text);
+            g.DrawLine(light, 0, 0, w, 0);
+            g.DrawLine(light, 0, 0, 0, h);
+            g.DrawLine(dark, 0, h, w, h);
+            g.DrawLine(dark, w, 0, w, h);
+            g.DrawLine(shadow, 1, h - 1, w - 1, h - 1);
+            g.DrawLine(shadow, w - 1, 1, w - 1, h - 1);
         }
 
         protected override void OnRenderSeparator(ToolStripSeparatorRenderEventArgs e)
         {
             int y = e.Item.Height / 2;
-            using var dark = new Pen(Color.FromArgb(0x80, 0x80, 0x80));
+            using var dark = new Pen(RetroMenuColors.Shadow);
+            using var light = new Pen(RetroMenuColors.Highlight);
             e.Graphics.DrawLine(dark, 2, y, e.Item.Width - 3, y);
-            e.Graphics.DrawLine(Pens.White, 2, y + 1, e.Item.Width - 3, y + 1);
+            e.Graphics.DrawLine(light, 2, y + 1, e.Item.Width - 3, y + 1);
         }
     }
 
