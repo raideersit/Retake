@@ -7,7 +7,9 @@ namespace ReplayClip.Audio;
 /// Convierte paquetes WASAPI (con huecos, solapes y deriva de reloj) en un flujo sin cortes:
 /// <list type="bullet">
 /// <item>Hueco de más de 20 ms (p. ej. el loopback no entrega nada cuando no suena nada): se rellena con silencio.</item>
-/// <item>Solape de más de 20 ms: se descarta la parte repetida.</item>
+/// <item>Solape de más de 20 ms con el paquete anterior (audio repetido): se descarta la parte repetida.</item>
+/// <item>Paquete atrasado respecto al silencio que ya se rellenó (típico del loopback, que entrega con
+/// más retraso que el micrófono): se coloca a continuación, nunca se descarta audio real.</item>
 /// <item>Si la fuente se calla o desaparece (micrófono desconectado), avanza con silencio para no desincronizar.</item>
 /// </list>
 /// </summary>
@@ -21,6 +23,9 @@ public sealed class PcmTimeline
 
     private short[] _pending = new short[SampleRate / 10 * Channels];
     private int _pendingFrames;
+
+    /// <summary>Índice donde terminaba, según su marca de tiempo, el último paquete real (-1 = ninguno).</summary>
+    private long _lastPacketEnd = -1;
 
     /// <summary>Índice absoluto (fotogramas de 48 kHz desde el origen del QPC) del próximo fotograma a emitir.</summary>
     public long NextIndex { get; private set; } = -1;
@@ -46,18 +51,26 @@ public sealed class PcmTimeline
         if (NextIndex < 0) NextIndex = packetIndex < 0 ? TicksToIndex(MediaClock.Now) : packetIndex;
         if (packetIndex < 0) packetIndex = NextIndex;
 
+        // Solape real: el paquete repite audio de uno anterior (según sus propias marcas de tiempo).
+        if (qpcTicks >= 0 && _lastPacketEnd >= 0)
+        {
+            long repeated = _lastPacketEnd - packetIndex;
+            if (repeated > ToleranceFrames)
+            {
+                int skip = (int)Math.Min(repeated, frames);
+                interleaved = interleaved[(skip * Channels)..];
+                frames -= skip;
+                packetIndex += skip;
+            }
+        }
+        _lastPacketEnd = qpcTicks >= 0 ? Math.Max(_lastPacketEnd, packetIndex + frames) : -1;
+        if (frames <= 0) return;
+
         long difference = packetIndex - NextIndex;
-        if (difference > ToleranceFrames)
-        {
-            AppendSilence(difference);
-        }
-        else if (difference < -ToleranceFrames)
-        {
-            int skip = (int)Math.Min(-difference, frames);
-            interleaved = interleaved[(skip * Channels)..];
-            frames -= skip;
-        }
-        if (frames > 0) AppendFrames(interleaved);
+        if (difference > ToleranceFrames) AppendSilence(difference);
+        // Si difference < 0 el paquete llega más tarde que el silencio de relleno ya emitido: ese silencio
+        // no se puede retirar, así que el audio se coloca a continuación en lugar de tirarlo.
+        AppendFrames(interleaved);
     }
 
     /// <summary>Avanza con silencio hasta <paramref name="targetIndex"/> si la fuente se quedó atrás.</summary>

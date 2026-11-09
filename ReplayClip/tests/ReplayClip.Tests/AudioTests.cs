@@ -54,6 +54,25 @@ public class PcmTimelineTests
     }
 
     [Fact]
+    public void Late_packet_after_silence_fill_is_kept_not_dropped()
+    {
+        // El loopback (audio del juego) entrega con más retraso que el relleno de silencio:
+        // antes se descartaba el paquete entero y solo quedaba el micrófono.
+        var timeline = new PcmTimeline();
+        timeline.FillSilenceUntil(48_000);
+        timeline.FillSilenceUntil(48_000 + 9600);           // 200 ms de silencio ya emitidos
+        timeline.ClearPending();
+        timeline.Append(Ticks(48_000 + 4800), Frames(480, 9)); // paquete fechado 100 ms antes del final
+        Assert.Equal(480, timeline.PendingFrames);
+        Assert.True(timeline.Pending.ToArray().All(s => s == 9));
+
+        // Los siguientes paquetes contiguos (igual de atrasados) tampoco se pierden.
+        timeline.Append(Ticks(48_000 + 4800 + 480), Frames(480, 9));
+        Assert.Equal(960, timeline.PendingFrames);
+        Assert.Equal(48_000 + 9600 + 960, timeline.NextIndex);
+    }
+
+    [Fact]
     public void Silence_fill_keeps_the_stream_moving()
     {
         var timeline = new PcmTimeline();
