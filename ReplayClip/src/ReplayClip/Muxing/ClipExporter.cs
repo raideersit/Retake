@@ -55,6 +55,7 @@ public static class ClipExporter
                 foreach (var sample in all) muxer.WriteSample(sample.Info, sample.Data);
                 muxer.FinalizeFile();
             }
+            Mp4TrackFlags.KeepOnlyLastAudioTrackEnabled(partial);
             File.Move(partial, path);
             Logger.Info($"Clip guardado: {path} ({snapshot.DurationSeconds:F1} s, {snapshot.TotalBytes / 1024 / 1024} MB, " +
                         $"{snapshot.Video.Count} fotogramas, pistas de audio: {string.Join(", ", snapshot.Audio.Keys)}).");

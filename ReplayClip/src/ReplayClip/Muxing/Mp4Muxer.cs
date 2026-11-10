@@ -36,7 +36,10 @@ public sealed class Mp4Muxer : IDisposable
         try
         {
             AddPassthroughStream(StreamKind.Video, video);
-            foreach (var track in audio) AddPassthroughStream(track.Kind, track);
+            // La mezcla va la última: Media Foundation (Películas y TV, el Reproductor de Windows Media, vistas
+            // previas...) reproduce por defecto la pista que queda al final del archivo. Mp4TrackFlags deja
+            // además habilitada solo la mezcla para los reproductores que se guían por esa bandera.
+            foreach (var track in audio.OrderByDescending(a => a.Kind)) AddPassthroughStream(track.Kind, track);
             _writer.BeginWriting();
         }
         catch

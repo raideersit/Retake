@@ -198,6 +198,7 @@ public sealed class RecordingWriter : IEncodedSampleSink, IDisposable
             _muxer.Dispose();
             _muxer = null;
         }
+        Mp4TrackFlags.KeepOnlyLastAudioTrackEnabled(partial);
         try
         {
             string final = partial[..^5]; // quita ".part"
