@@ -14,12 +14,12 @@ public static class ClipExporter
     private const long SafetyMarginBytes = 64L * 1024 * 1024;
 
     /// <summary>Exporta y desecha la instantánea. Devuelve la ruta del clip.</summary>
-    public static Task<string> ExportAsync(ReplaySnapshot snapshot, string folder)
+    public static Task<string> ExportAsync(ReplaySnapshot snapshot, string folder, string? gameTag = null)
     {
         var completion = new TaskCompletionSource<string>(TaskCreationOptions.RunContinuationsAsynchronously);
         var thread = new Thread(() =>
         {
-            try { completion.SetResult(Export(snapshot, folder)); }
+            try { completion.SetResult(Export(snapshot, folder, gameTag)); }
             catch (Exception ex) { completion.SetException(ex); }
             finally { snapshot.Dispose(); }
         })
@@ -33,12 +33,13 @@ public static class ClipExporter
     }
 
     /// <summary>Exportación síncrona (también la usan las pruebas).</summary>
-    public static string Export(ReplaySnapshot snapshot, string folder)
+    public static string Export(ReplaySnapshot snapshot, string folder, string? gameTag = null)
     {
         Directory.CreateDirectory(folder);
         EnsureFreeSpace(folder, snapshot.TotalBytes);
 
-        string path = UniquePath(folder, $"Clip_{DateTime.Now:yyyy-MM-dd_HH-mm-ss}", ".mp4");
+        string prefix = string.IsNullOrEmpty(gameTag) ? "" : gameTag + "_";
+        string path = UniquePath(folder, $"{prefix}Clip_{DateTime.Now:yyyy-MM-dd_HH-mm-ss}", ".mp4");
         string partial = path + ".part";
         var audioFormats = snapshot.Audio.OrderBy(a => a.Key).Select(a => a.Value.Format).ToList();
 

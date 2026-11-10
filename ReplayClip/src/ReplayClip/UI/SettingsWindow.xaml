@@ -107,6 +107,13 @@
                             <GroupBox Header="Audio" Margin="0,0,0,8">
                                 <StackPanel>
                                     <CheckBox Margin="0,3" Content="Audio del sistema" IsChecked="{Binding CaptureSystemAudio}" />
+                                    <DockPanel Margin="0,2">
+                                        <TextBlock DockPanel.Dock="Left" Text="Volumen del sistema:" VerticalAlignment="Center" Width="140" />
+                                        <TextBlock DockPanel.Dock="Right" Text="{Binding SystemGainPercent, StringFormat={}{0} %}" Margin="8,0,0,0" VerticalAlignment="Center" Width="50" />
+                                        <Slider Minimum="100" Maximum="800" TickFrequency="25" IsSnapToTickEnabled="True" Value="{Binding SystemGainPercent}"
+                                                IsEnabled="{Binding CaptureSystemAudio}"
+                                                ToolTip="Amplifica el audio del juego en los clips (100 % = sin cambio). Se aplica a la pista 2 y a la mezcla." />
+                                    </DockPanel>
                                     <CheckBox x:Name="MicCheck" Margin="0,3" Content="Micrófono (pistas: 1 mezcla, 2 sistema, 3 micrófono)"
                                               IsChecked="{Binding CaptureMicrophone}" />
                                     <ComboBox Margin="0,2" ItemsSource="{Binding Microphones}" SelectedItem="{Binding SelectedMicrophone}"
@@ -122,7 +129,7 @@
                                         <ColumnDefinition Width="Auto" />
                                     </Grid.ColumnDefinitions>
                                     <Grid.RowDefinitions>
-                                        <RowDefinition /><RowDefinition /><RowDefinition /><RowDefinition /><RowDefinition />
+                                        <RowDefinition /><RowDefinition /><RowDefinition /><RowDefinition /><RowDefinition /><RowDefinition />
                                     </Grid.RowDefinitions>
                                     <TextBlock Text="Guardar repetición:" VerticalAlignment="Center" />
                                     <ui:HotkeyBox Grid.Column="1" GestureText="{Binding SaveHotkey}" Margin="0,2" />
@@ -135,6 +142,9 @@
                                     <CheckBox Grid.Row="4" Grid.ColumnSpan="3" Margin="0,3" IsChecked="{Binding PlaySounds}"
                                               Content="Sonido al guardar un clip y al iniciar o detener la grabación"
                                               ToolTip="El sonido sale por los altavoces, así que también queda en el audio del sistema de los clips siguientes." />
+                                    <CheckBox Grid.Row="5" Grid.ColumnSpan="3" Margin="0,3" IsChecked="{Binding NameClipsByGame}"
+                                              Content="Empezar el nombre del clip con el juego detectado (LOL_Clip_..., TWD_Clip_...)"
+                                              ToolTip="Para juegos que no se reconocen, agrega GameAliases en settings.json: nombre del proceso sin .exe, y la sigla." />
                                 </Grid>
                             </GroupBox>
 

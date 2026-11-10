@@ -23,6 +23,8 @@ public sealed class SettingsViewModel : INotifyPropertyChanged
     private CaptureMode _captureMode;
     private string _status = "";
 
+    private int _systemGainPercent;
+
     public SettingsViewModel(AppSettings settings)
     {
         _replaySeconds = settings.ReplaySeconds;
@@ -34,11 +36,14 @@ public sealed class SettingsViewModel : INotifyPropertyChanged
         RecordHotkey = settings.ToggleRecordingHotkey;
         _captureMode = settings.CaptureMode;
         CaptureSystemAudio = settings.CaptureSystemAudio;
+        _systemGainPercent = settings.SystemGainPercent;
         CaptureMicrophone = settings.CaptureMicrophone;
         CaptureCursor = settings.CaptureCursor;
         StartWithWindows = settings.StartWithWindows;
         UseDesktopDuplication = settings.UseDesktopDuplication;
         PlaySounds = settings.PlaySounds;
+        NameClipsByGame = settings.NameClipsByGame;
+        _gameAliases = settings.GameAliases;
 
         RefreshSources();
         SelectedMonitor = Monitors.FirstOrDefault(m => m.Value == settings.MonitorDeviceName) ?? Monitors.FirstOrDefault();
@@ -122,6 +127,12 @@ public sealed class SettingsViewModel : INotifyPropertyChanged
 
     public bool CaptureSystemAudio { get; set; }
 
+    public int SystemGainPercent
+    {
+        get => _systemGainPercent;
+        set { _systemGainPercent = Math.Clamp(value, AppSettings.MinSystemGainPercent, AppSettings.MaxSystemGainPercent); OnChanged(); }
+    }
+
     public bool CaptureMicrophone { get; set; }
 
     public Choice<string>? SelectedMicrophone { get; set; }
@@ -133,6 +144,11 @@ public sealed class SettingsViewModel : INotifyPropertyChanged
     public bool UseDesktopDuplication { get; set; }
 
     public bool PlaySounds { get; set; }
+
+    public bool NameClipsByGame { get; set; }
+
+    // Los alias no se editan en la ventana: se conservan tal cual al guardar.
+    private readonly Dictionary<string, string> _gameAliases;
 
     /// <summary>"RAM estimada del búfer: 80 MB".</summary>
     public string MemoryEstimate
@@ -222,12 +238,15 @@ public sealed class SettingsViewModel : INotifyPropertyChanged
             TargetProcessName = processName,
             TargetWindowTitle = CaptureMode == CaptureMode.Window ? title : "",
             CaptureSystemAudio = CaptureSystemAudio,
+            SystemGainPercent = SystemGainPercent,
             CaptureMicrophone = CaptureMicrophone,
             MicrophoneDeviceId = SelectedMicrophone?.Value ?? "",
             CaptureCursor = CaptureCursor,
             StartWithWindows = StartWithWindows,
             UseDesktopDuplication = UseDesktopDuplication,
             PlaySounds = PlaySounds,
+            NameClipsByGame = NameClipsByGame,
+            GameAliases = _gameAliases,
         }.Normalize();
     }
 

@@ -24,6 +24,8 @@ public sealed class AppSettings
     public const int MaxReplaySeconds = 120;
     public const int MinBitrateMbps = 8;
     public const int MaxBitrateMbps = 25;
+    public const int MinSystemGainPercent = 100;
+    public const int MaxSystemGainPercent = 800;
 
     /// <summary>Segundos del búfer de repetición (15 a 120).</summary>
     public int ReplaySeconds { get; set; } = 30;
@@ -56,6 +58,9 @@ public sealed class AppSettings
 
     public bool CaptureSystemAudio { get; set; } = true;
 
+    /// <summary>Ganancia del audio del sistema en % (100 a 800): sube el volumen del juego en los clips.</summary>
+    public int SystemGainPercent { get; set; } = 100;
+
     public bool CaptureMicrophone { get; set; } = false;
 
     /// <summary>Id del micrófono (MMDevice.ID). Vacío = el predeterminado de comunicaciones/consola.</summary>
@@ -75,6 +80,15 @@ public sealed class AppSettings
     /// <summary>Sonido corto al guardar un clip y al iniciar o detener la grabación.</summary>
     public bool PlaySounds { get; set; } = true;
 
+    /// <summary>Empezar el nombre de cada clip con la sigla del juego detectado (LOL_Clip_..., TWD_Clip_...).</summary>
+    public bool NameClipsByGame { get; set; } = true;
+
+    /// <summary>
+    /// Siglas propias: nombre del proceso (sin .exe) a sigla. Sirve para juegos que la app no reconoce,
+    /// p. ej. "MiJuego": "MJ". Se edita en settings.json.
+    /// </summary>
+    public Dictionary<string, string> GameAliases { get; set; } = new();
+
     public static string DefaultOutputFolder =>
         Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.MyVideos), "ReplayClip");
 
@@ -85,6 +99,7 @@ public sealed class AppSettings
         FramesPerSecond = FramesPerSecond >= 45 ? 60 : 30;
         BitrateMbps = Math.Clamp(BitrateMbps, MinBitrateMbps, MaxBitrateMbps);
         MaxOutputHeight = MaxOutputHeight > 720 ? 1080 : 720;
+        SystemGainPercent = Math.Clamp(SystemGainPercent, MinSystemGainPercent, MaxSystemGainPercent);
         if (string.IsNullOrWhiteSpace(OutputFolder)) OutputFolder = DefaultOutputFolder;
         if (!HotkeyGesture.TryParse(SaveReplayHotkey, out _)) SaveReplayHotkey = "Ctrl+Shift+F9";
         if (!HotkeyGesture.TryParse(ToggleRecordingHotkey, out _)) ToggleRecordingHotkey = "Ctrl+Shift+F10";
@@ -93,6 +108,7 @@ public sealed class AppSettings
         TargetProcessName ??= "";
         TargetWindowTitle ??= "";
         MicrophoneDeviceId ??= "";
+        GameAliases ??= new();
         return this;
     }
 
@@ -119,6 +135,7 @@ public sealed class AppSettings
         || TargetProcessName != other.TargetProcessName
         || TargetWindowTitle != other.TargetWindowTitle
         || CaptureSystemAudio != other.CaptureSystemAudio
+        || SystemGainPercent != other.SystemGainPercent
         || CaptureMicrophone != other.CaptureMicrophone
         || MicrophoneDeviceId != other.MicrophoneDeviceId
         || CaptureCursor != other.CaptureCursor

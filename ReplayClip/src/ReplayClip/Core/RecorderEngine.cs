@@ -28,6 +28,7 @@ public sealed class RecorderEngine : IDisposable
     private readonly EncodedSampleBus _bus = new();
     private readonly object _lifecycleLock = new();
     private readonly Timer _monitorTimer;
+    private readonly GameDetector _games = new();
     private AppSettings _settings;
     private ReplayRingBuffer? _ring;
     private VideoPipeline? _video;
@@ -79,6 +80,8 @@ public sealed class RecorderEngine : IDisposable
             _ring = new ReplayRingBuffer(_settings.ReplaySeconds, CapacityFor(_settings));
             _bus.Subscribe(_ring);
             StartPipelinesLocked();
+            _games.SetAliases(_settings.GameAliases);
+            _games.Start();
             _monitorTimer.Change(MonitorInterval, MonitorInterval);
         }
     }
@@ -126,7 +129,9 @@ public sealed class RecorderEngine : IDisposable
                     sound: NotificationSound.Error);
                 return;
             }
-            _pendingSave = ExportAndNotifyAsync(snapshot, folder);
+            string? gameTag = _settings.NameClipsByGame ? _games.DetectRecent(TimeSpan.FromSeconds(_settings.ReplaySeconds)) : null;
+            if (gameTag is not null) Logger.Info($"Juego detectado para el nombre del clip: {gameTag}.");
+            _pendingSave = ExportAndNotifyAsync(snapshot, folder, gameTag);
         }
         await _pendingSave.ConfigureAwait(false);
     }
@@ -174,6 +179,7 @@ public sealed class RecorderEngine : IDisposable
             _monitorTimer.Change(Timeout.Infinite, Timeout.Infinite);
         }
         _monitorTimer.Dispose();
+        _games.Dispose();
 
         // Orden de cierre limpio: terminar archivos primero, luego liberar la captura.
         lock (_lifecycleLock)
@@ -201,7 +207,7 @@ public sealed class RecorderEngine : IDisposable
         try
         {
             _audio = new AudioPipeline(_settings.CaptureSystemAudio, _settings.CaptureMicrophone,
-                _settings.MicrophoneDeviceId, _bus, NextGeneration);
+                _settings.MicrophoneDeviceId, _bus, NextGeneration, _settings.SystemGainPercent / 100f);
             if (_audio.MicrophoneMissing)
             {
                 Notify(NotificationKind.Warning, "Micrófono no encontrado", "Se graba sin micrófono. Conéctalo y vuelve a guardar los ajustes.");
@@ -325,11 +331,11 @@ public sealed class RecorderEngine : IDisposable
         StatusChanged?.Invoke();
     }
 
-    private async Task ExportAndNotifyAsync(ReplaySnapshot snapshot, string folder)
+    private async Task ExportAndNotifyAsync(ReplaySnapshot snapshot, string folder, string? gameTag)
     {
         try
         {
-            string path = await ClipExporter.ExportAsync(snapshot, folder).ConfigureAwait(false);
+            string path = await ClipExporter.ExportAsync(snapshot, folder, gameTag).ConfigureAwait(false);
             Notify(NotificationKind.Success, "Clip guardado", path, path, NotificationSound.ClipSaved);
         }
         catch (Exception ex)

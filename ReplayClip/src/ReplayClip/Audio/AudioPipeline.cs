@@ -21,12 +21,15 @@ public sealed class AudioPipeline : IDisposable
     private readonly Thread _thread;
     private readonly ManualResetEventSlim _stop = new(false);
     private AacEncoder? _mixEncoder, _systemEncoder, _micEncoder;
+    private readonly float _systemGain;
+    private short[] _gainBuffer = new short[PcmTimeline.SampleRate / 10 * PcmTimeline.Channels];
 
     /// <param name="captureSystem">Grabar el audio del sistema.</param>
     /// <param name="captureMicrophone">Grabar el micrófono (se omite si no hay ninguno conectado).</param>
     /// <param name="microphoneId">Micrófono concreto o vacío para el predeterminado.</param>
-    public AudioPipeline(bool captureSystem, bool captureMicrophone, string? microphoneId, EncodedSampleBus bus, Func<int> nextGeneration)
+    public AudioPipeline(bool captureSystem, bool captureMicrophone, string? microphoneId, EncodedSampleBus bus, Func<int> nextGeneration, float systemGain = 1f)
     {
+        _systemGain = systemGain;
         _bus = bus;
         _nextGeneration = nextGeneration;
         if (captureSystem) _system = new WasapiCaptureSource(loopback: true, null, "Audio del sistema");
@@ -135,8 +138,9 @@ public sealed class AudioPipeline : IDisposable
             var mic = _microphone.Timeline;
             if (sys.PendingFrames > 0)
             {
-                _systemEncoder!.Encode(sys.PendingStartIndex, sys.Pending);
-                _mixer.PushSystem(sys.PendingStartIndex, sys.Pending);
+                var boosted = AudioGain.Apply(sys.Pending, _systemGain, ref _gainBuffer);
+                _systemEncoder!.Encode(sys.PendingStartIndex, boosted);
+                _mixer.PushSystem(sys.PendingStartIndex, boosted);
                 sys.ClearPending();
             }
             if (mic.PendingFrames > 0)
@@ -152,7 +156,8 @@ public sealed class AudioPipeline : IDisposable
             var only = (_system ?? _microphone)?.Timeline;
             if (only is { PendingFrames: > 0 })
             {
-                _mixEncoder!.Encode(only.PendingStartIndex, only.Pending);
+                var samples = only == _system?.Timeline ? AudioGain.Apply(only.Pending, _systemGain, ref _gainBuffer) : only.Pending;
+                _mixEncoder!.Encode(only.PendingStartIndex, samples);
                 only.ClearPending();
             }
         }
