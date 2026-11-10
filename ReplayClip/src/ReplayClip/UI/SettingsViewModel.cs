@@ -24,6 +24,7 @@ public sealed class SettingsViewModel : INotifyPropertyChanged
     private string _status = "";
 
     private int _systemGainPercent;
+    private int _microphoneGainPercent;
 
     public SettingsViewModel(AppSettings settings)
     {
@@ -37,6 +38,7 @@ public sealed class SettingsViewModel : INotifyPropertyChanged
         _captureMode = settings.CaptureMode;
         CaptureSystemAudio = settings.CaptureSystemAudio;
         _systemGainPercent = settings.SystemGainPercent;
+        _microphoneGainPercent = settings.MicrophoneGainPercent;
         CaptureMicrophone = settings.CaptureMicrophone;
         CaptureCursor = settings.CaptureCursor;
         StartWithWindows = settings.StartWithWindows;
@@ -126,6 +128,12 @@ public sealed class SettingsViewModel : INotifyPropertyChanged
     public string WindowTitle { get; set; } = "";
 
     public bool CaptureSystemAudio { get; set; }
+
+    public int MicrophoneGainPercent
+    {
+        get => _microphoneGainPercent;
+        set { _microphoneGainPercent = Math.Clamp(value, AppSettings.MinMicrophoneGainPercent, AppSettings.MaxMicrophoneGainPercent); OnChanged(); }
+    }
 
     public int SystemGainPercent
     {
@@ -239,6 +247,7 @@ public sealed class SettingsViewModel : INotifyPropertyChanged
             TargetWindowTitle = CaptureMode == CaptureMode.Window ? title : "",
             CaptureSystemAudio = CaptureSystemAudio,
             SystemGainPercent = SystemGainPercent,
+            MicrophoneGainPercent = MicrophoneGainPercent,
             CaptureMicrophone = CaptureMicrophone,
             MicrophoneDeviceId = SelectedMicrophone?.Value ?? "",
             CaptureCursor = CaptureCursor,

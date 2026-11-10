@@ -207,7 +207,8 @@ public sealed class RecorderEngine : IDisposable
         try
         {
             _audio = new AudioPipeline(_settings.CaptureSystemAudio, _settings.CaptureMicrophone,
-                _settings.MicrophoneDeviceId, _bus, NextGeneration, _settings.SystemGainPercent / 100f);
+                _settings.MicrophoneDeviceId, _bus, NextGeneration, _settings.SystemGainPercent / 100f,
+                _settings.MicrophoneGainPercent / 100f);
             if (_audio.MicrophoneMissing)
             {
                 Notify(NotificationKind.Warning, "Micrófono no encontrado", "Se graba sin micrófono. Conéctalo y vuelve a guardar los ajustes.");

@@ -26,6 +26,8 @@ public sealed class AppSettings
     public const int MaxBitrateMbps = 25;
     public const int MinSystemGainPercent = 100;
     public const int MaxSystemGainPercent = 800;
+    public const int MinMicrophoneGainPercent = 50;
+    public const int MaxMicrophoneGainPercent = 800;
 
     /// <summary>Segundos del búfer de repetición (15 a 120).</summary>
     public int ReplaySeconds { get; set; } = 30;
@@ -60,6 +62,9 @@ public sealed class AppSettings
 
     /// <summary>Ganancia del audio del sistema en % (100 a 800): sube el volumen del juego en los clips.</summary>
     public int SystemGainPercent { get; set; } = 100;
+
+    /// <summary>Ganancia del micrófono en % (50 a 800): equilibra tu voz frente al juego en los clips.</summary>
+    public int MicrophoneGainPercent { get; set; } = 100;
 
     public bool CaptureMicrophone { get; set; } = false;
 
@@ -100,6 +105,7 @@ public sealed class AppSettings
         BitrateMbps = Math.Clamp(BitrateMbps, MinBitrateMbps, MaxBitrateMbps);
         MaxOutputHeight = MaxOutputHeight > 720 ? 1080 : 720;
         SystemGainPercent = Math.Clamp(SystemGainPercent, MinSystemGainPercent, MaxSystemGainPercent);
+        MicrophoneGainPercent = Math.Clamp(MicrophoneGainPercent, MinMicrophoneGainPercent, MaxMicrophoneGainPercent);
         if (string.IsNullOrWhiteSpace(OutputFolder)) OutputFolder = DefaultOutputFolder;
         if (!HotkeyGesture.TryParse(SaveReplayHotkey, out _)) SaveReplayHotkey = "Ctrl+Shift+F9";
         if (!HotkeyGesture.TryParse(ToggleRecordingHotkey, out _)) ToggleRecordingHotkey = "Ctrl+Shift+F10";
@@ -136,6 +142,7 @@ public sealed class AppSettings
         || TargetWindowTitle != other.TargetWindowTitle
         || CaptureSystemAudio != other.CaptureSystemAudio
         || SystemGainPercent != other.SystemGainPercent
+        || MicrophoneGainPercent != other.MicrophoneGainPercent
         || CaptureMicrophone != other.CaptureMicrophone
         || MicrophoneDeviceId != other.MicrophoneDeviceId
         || CaptureCursor != other.CaptureCursor

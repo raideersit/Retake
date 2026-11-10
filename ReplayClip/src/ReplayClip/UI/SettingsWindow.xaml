@@ -118,6 +118,13 @@
                                               IsChecked="{Binding CaptureMicrophone}" />
                                     <ComboBox Margin="0,2" ItemsSource="{Binding Microphones}" SelectedItem="{Binding SelectedMicrophone}"
                                               IsEnabled="{Binding IsChecked, ElementName=MicCheck}" />
+                                    <DockPanel Margin="0,2">
+                                        <TextBlock DockPanel.Dock="Left" Text="Volumen del micrófono:" VerticalAlignment="Center" Width="140" />
+                                        <TextBlock DockPanel.Dock="Right" Text="{Binding MicrophoneGainPercent, StringFormat={}{0} %}" Margin="8,0,0,0" VerticalAlignment="Center" Width="50" />
+                                        <Slider Minimum="50" Maximum="800" TickFrequency="25" IsSnapToTickEnabled="True" Value="{Binding MicrophoneGainPercent}"
+                                                IsEnabled="{Binding IsChecked, ElementName=MicCheck}"
+                                                ToolTip="Amplifica tu voz en los clips (100 % = sin cambio). Se aplica a la pista 3 y a la mezcla." />
+                                    </DockPanel>
                                 </StackPanel>
                             </GroupBox>
 

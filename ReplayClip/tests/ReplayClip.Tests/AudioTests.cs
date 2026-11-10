@@ -172,6 +172,9 @@ public class AudioGainTests
         Assert.Equal(100, new AppSettings { SystemGainPercent = 10 }.Normalize().SystemGainPercent);
         Assert.Equal(800, new AppSettings { SystemGainPercent = 5000 }.Normalize().SystemGainPercent);
         Assert.True(new AppSettings { SystemGainPercent = 300 }.RequiresPipelineRestart(new AppSettings()));
+        Assert.Equal(50, new AppSettings { MicrophoneGainPercent = 1 }.Normalize().MicrophoneGainPercent);
+        Assert.Equal(800, new AppSettings { MicrophoneGainPercent = 9999 }.Normalize().MicrophoneGainPercent);
+        Assert.True(new AppSettings { MicrophoneGainPercent = 200 }.RequiresPipelineRestart(new AppSettings()));
     }
 }
 
