@@ -294,6 +294,8 @@ public sealed class RecorderEngine : IDisposable
                 StatusChanged?.Invoke();
             }
 
+            _video.RestoreDuplicationIfPossible();
+
             var change = _resolver.CheckForChange(_video.CurrentTarget);
             if (change is not null)
             {

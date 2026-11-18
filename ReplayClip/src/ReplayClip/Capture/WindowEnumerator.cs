@@ -84,6 +84,25 @@ public static class WindowEnumerator
 
     public static bool IsMinimized(IntPtr hwnd) => IsIconic(hwnd);
 
+    /// <summary>
+    /// True si la ventana en primer plano (que no sea el escritorio ni la barra de tareas) cubre por completo
+    /// el monitor indicado: un juego a pantalla completa. Solo consulta user32.
+    /// </summary>
+    public static bool IsForegroundFullscreenOn(IntPtr monitor)
+    {
+        IntPtr hwnd = GetForegroundWindow();
+        if (hwnd == IntPtr.Zero || IsIconic(hwnd)) return false;
+        GetWindowThreadProcessId(hwnd, out uint pid);
+        if (pid == (uint)Environment.ProcessId) return false;
+        var className = new StringBuilder(256);
+        GetClassName(hwnd, className, className.Capacity);
+        if (ShellClasses.Contains(className.ToString())) return false;
+        if (MonitorFromWindow(hwnd, 2) != monitor) return false;
+        if (!GetWindowRect(hwnd, out Rect rect)) return false;
+        var info = GetMonitors().FirstOrDefault(m => m.Handle == monitor);
+        return info is not null && rect.Right - rect.Left >= info.Width && rect.Bottom - rect.Top >= info.Height;
+    }
+
     /// <summary>Monitor donde está la mayor parte de la ventana.</summary>
     public static IntPtr MonitorOfWindow(IntPtr hwnd) => MonitorFromWindow(hwnd, 2 /* MONITOR_DEFAULTTONEAREST */);
 

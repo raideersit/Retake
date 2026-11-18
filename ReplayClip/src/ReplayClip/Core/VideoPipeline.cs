@@ -21,6 +21,8 @@ public sealed class VideoPipeline : IDisposable
     private readonly DesktopDuplicationSource? _duplication;
     private volatile ICaptureSource? _active;
     private volatile bool _failed;
+    private readonly object _switchGate = new();
+    private volatile bool _duplicationStalled;
     private long _framesArrived;
     private long _framesAccepted;
     private long _framesNoSlot;
@@ -63,6 +65,7 @@ public sealed class VideoPipeline : IDisposable
             {
                 _duplication = new DesktopDuplicationSource(_device, fps, settings.CaptureCursor, OnFrameCaptured);
                 _duplication.TargetClosed += t => TargetClosed?.Invoke(t);
+                _duplication.Stalled += OnDuplicationStalled;
             }
         }
         catch
@@ -102,12 +105,18 @@ public sealed class VideoPipeline : IDisposable
     /// <summary>Cambia de ventana o monitor sin reiniciar el codificador (la salida mantiene su tamaño).</summary>
     public void SwitchTarget(CaptureTarget target)
     {
+        lock (_switchGate) SwitchTargetLocked(target, allowDuplication: true);
+    }
+
+    private void SwitchTargetLocked(CaptureTarget target, bool allowDuplication)
+    {
         StopCapture();
         _converter.ResetInputCache();
+        _duplicationStalled = !allowDuplication;
 
         // Monitores: Desktop Duplication (sin borde amarillo). Si no está disponible (p. ej. el monitor
         // cuelga de otra GPU), se usa Windows.Graphics.Capture.
-        if (target.IsMonitor && _duplication is not null)
+        if (allowDuplication && target.IsMonitor && _duplication is not null)
         {
             try
             {
@@ -137,11 +146,45 @@ public sealed class VideoPipeline : IDisposable
     /// <summary>Detiene la captura y emite imagen negra (objetivo cerrado o aún inexistente).</summary>
     public void ShowBlack()
     {
-        StopCapture();
+        lock (_switchGate) StopCapture();
         var slot = _converter.ShowBlack(_encoder.IsSlotFree);
         if (slot is null) return;
         _encoder.Submit(slot, _pacer.ClaimPts(MediaClock.Now));
         _pacer.MarkSubmitted();
+    }
+
+    /// <summary>
+    /// Desktop Duplication se quedó sin imagen con un juego a pantalla completa: se captura el monitor con
+    /// Windows.Graphics.Capture, que sí recibe esos juegos. Se invoca en el hilo de captura de la duplicación,
+    /// que no puede detenerse a sí mismo, de ahí el cambio en otro hilo.
+    /// </summary>
+    private void OnDuplicationStalled(CaptureTarget target)
+    {
+        Task.Run(() =>
+        {
+            lock (_switchGate)
+            {
+                if (_disposed || _active != _duplication) return;
+                SwitchTargetLocked(target, allowDuplication: false);
+            }
+        });
+    }
+
+    /// <summary>
+    /// Si se estaba usando el respaldo de Windows.Graphics.Capture y el juego a pantalla completa ya no está
+    /// delante, vuelve a Desktop Duplication (sin borde amarillo en Windows 10).
+    /// </summary>
+    public void RestoreDuplicationIfPossible()
+    {
+        if (!_duplicationStalled) return;
+        var target = _active?.CurrentTarget;
+        if (target is null || !target.IsMonitor || WindowEnumerator.IsForegroundFullscreenOn(target.Handle)) return;
+        lock (_switchGate)
+        {
+            if (_disposed || !_duplicationStalled) return;
+            Logger.Info("El juego a pantalla completa ya no está delante; se vuelve a Desktop Duplication.");
+            SwitchTargetLocked(target, allowDuplication: true);
+        }
     }
 
     public void RequestKeyFrame() => _encoder.RequestKeyFrame();

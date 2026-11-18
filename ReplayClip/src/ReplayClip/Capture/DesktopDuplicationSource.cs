@@ -33,6 +33,11 @@ public sealed class DesktopDuplicationSource : ICaptureSource
     private bool _hasFrame;
     private long _lastFrameTime;
     private DateTime _failingSince = DateTime.MaxValue;
+    private long _lastRealFrame;
+    private bool _stallRaised;
+
+    /// <summary>Segundos sin imagen nueva, con un juego a pantalla completa delante, para dar la captura por estancada.</summary>
+    private const double StallSeconds = 2.5;
 
     /// <param name="framesPerSecond">Fps de salida: se consulta la duplicación al doble de esa frecuencia.</param>
     public DesktopDuplicationSource(D3DDeviceManager device, int framesPerSecond, bool captureCursor, CaptureFrameHandler onFrame)
@@ -44,6 +49,12 @@ public sealed class DesktopDuplicationSource : ICaptureSource
     }
 
     public event Action<CaptureTarget>? TargetClosed;
+
+    /// <summary>
+    /// La duplicación no recibe imagen nueva aunque hay un juego a pantalla completa (típico de un juego que presenta
+    /// directo a pantalla, sin pasar por el compositor). Se invoca una vez por sesión, en el hilo de captura.
+    /// </summary>
+    public event Action<CaptureTarget>? Stalled;
 
     public CaptureTarget? CurrentTarget { get; private set; }
 
@@ -67,6 +78,8 @@ public sealed class DesktopDuplicationSource : ICaptureSource
         CurrentTarget = target;
         _stop = false;
         _hasFrame = false;
+        _stallRaised = false;
+        _lastRealFrame = MediaClock.Now;
         _thread = new Thread(CaptureLoop) { IsBackground = true, Name = "ReplayClip.DesktopDuplication", Priority = ThreadPriority.AboveNormal };
         _thread.Start();
         Logger.Info($"Captura iniciada con Desktop Duplication: {target.Description} ({_width}x{_height}).");
@@ -129,6 +142,7 @@ public sealed class DesktopDuplicationSource : ICaptureSource
             {
                 if (_duplication is null && !TryRecreate()) continue;
                 AcquireOne();
+                CheckStall();
             }
             catch (Exception ex)
             {
@@ -139,6 +153,17 @@ public sealed class DesktopDuplicationSource : ICaptureSource
             }
             timer.Wait(_pollInterval);
         }
+    }
+
+    private void CheckStall()
+    {
+        if (_stallRaised || _stop) return;
+        if (MediaClock.ToSeconds(MediaClock.Now - _lastRealFrame) < StallSeconds) return;
+        var target = CurrentTarget;
+        if (target is null || !WindowEnumerator.IsForegroundFullscreenOn(target.Handle)) return;
+        _stallRaised = true;
+        Logger.Warn($"Desktop Duplication sin imagen nueva desde hace {StallSeconds:F1} s con un juego a pantalla completa; se pasa a Windows.Graphics.Capture.");
+        Stalled?.Invoke(target);
     }
 
     private bool TryRecreate()
@@ -192,6 +217,7 @@ public sealed class DesktopDuplicationSource : ICaptureSource
         try
         {
             bool desktopChanged = info.LastPresentTime != 0;
+            if (desktopChanged) _lastRealFrame = MediaClock.Now;
             bool cursorMoved = info.LastMouseUpdateTime != 0;
             if (!desktopChanged && !(cursorMoved && _captureCursor && _hasFrame)) return;
 
