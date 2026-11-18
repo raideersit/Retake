@@ -226,6 +226,7 @@ public sealed class DesktopDuplicationSource : ICaptureSource
             _lastFrameTime = time;
 
             using var texture = resource.QueryInterface<ID3D11Texture2D>();
+            SyncSizeWithTexture(texture);
             if (!_captureCursor || !TryGetCursor(out var cursor))
             {
                 if (desktopChanged)
@@ -244,6 +245,39 @@ public sealed class DesktopDuplicationSource : ICaptureSource
         {
             resource.Dispose();
             duplication.ReleaseFrame();
+        }
+    }
+
+    /// <summary>
+    /// Un juego puede cambiar la resolución del monitor (pantalla completa a otra resolución): la duplicación
+    /// entrega entonces texturas de otro tamaño. Se adopta el de la textura real y se rehacen las copias; si no,
+    /// el conversor pediría un área mayor que la imagen y fallaría en todos los fotogramas.
+    /// </summary>
+    private void SyncSizeWithTexture(ID3D11Texture2D texture)
+    {
+        var description = texture.Description;
+        int width = (int)description.Width, height = (int)description.Height;
+        if (width == _width && height == _height) return;
+
+        Logger.Info($"Cambio de resolución del monitor: {_width}x{_height} -> {width}x{height}.");
+        _width = width;
+        _height = height;
+        try
+        {
+            var bounds = _output!.Description.DesktopCoordinates;
+            _left = bounds.Left;
+            _top = bounds.Top;
+        }
+        catch (Exception ex)
+        {
+            Logger.Warn($"No se pudo releer la posición del monitor: {ex.Message}");
+        }
+        lock (_device.ContextLock)
+        {
+            _cleanCopy?.Dispose();
+            _cleanCopy = null;
+            _composed?.Dispose();
+            _composed = null;
         }
     }
 

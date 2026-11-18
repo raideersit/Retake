@@ -81,6 +81,10 @@ public sealed class VideoFrameConverter : IDisposable
             if (slot is null) return null;
 
             var description = source.Description;
+            // El contenido nunca puede salirse de la textura (cambio de resolución a mitad de captura).
+            contentWidth = Math.Min(contentWidth, (int)description.Width);
+            contentHeight = Math.Min(contentHeight, (int)description.Height);
+            if (contentWidth <= 0 || contentHeight <= 0) return null;
             EnsureProcessor((int)description.Width, (int)description.Height);
             var inputView = GetInputView(source);
             var processor = _processor!;
