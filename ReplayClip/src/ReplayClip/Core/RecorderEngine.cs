@@ -294,6 +294,19 @@ public sealed class RecorderEngine : IDisposable
                 StatusChanged?.Invoke();
             }
 
+            if (_video.NeedsCaptureFallback)
+            {
+                if (_video.FallbackToGraphicsCapture())
+                {
+                    Notify(NotificationKind.Warning, "Captura cambiada a modo compatible",
+                        "Desktop Duplication dejó de funcionar (¿juego en pantalla completa exclusiva?). " +
+                        "Se usa Windows.Graphics.Capture. Si el video sigue en negro, pon el juego en ventana sin bordes " +
+                        "o elige el modo de captura por proceso.");
+                }
+                StatusChanged?.Invoke();
+                return;
+            }
+
             var change = _resolver.CheckForChange(_video.CurrentTarget);
             if (change is not null)
             {

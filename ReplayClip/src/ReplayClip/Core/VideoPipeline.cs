@@ -21,6 +21,8 @@ public sealed class VideoPipeline : IDisposable
     private readonly DesktopDuplicationSource? _duplication;
     private volatile ICaptureSource? _active;
     private volatile bool _failed;
+    private volatile bool _duplicationUnavailable;
+    private volatile bool _duplicationDisabled;
     private long _framesArrived;
     private long _framesAccepted;
     private long _framesNoSlot;
@@ -63,6 +65,7 @@ public sealed class VideoPipeline : IDisposable
             {
                 _duplication = new DesktopDuplicationSource(_device, fps, settings.CaptureCursor, OnFrameCaptured);
                 _duplication.TargetClosed += t => TargetClosed?.Invoke(t);
+                _duplication.Unavailable += () => _duplicationUnavailable = true;
             }
         }
         catch
@@ -107,7 +110,8 @@ public sealed class VideoPipeline : IDisposable
 
         // Monitores: Desktop Duplication (sin borde amarillo). Si no está disponible (p. ej. el monitor
         // cuelga de otra GPU), se usa Windows.Graphics.Capture.
-        if (target.IsMonitor && _duplication is not null)
+        _duplicationUnavailable = false;
+        if (target.IsMonitor && _duplication is not null && !_duplicationDisabled)
         {
             try
             {
@@ -131,6 +135,48 @@ public sealed class VideoPipeline : IDisposable
         {
             Logger.Error($"No se pudo capturar {target.Description}", ex);
             ShowBlack();
+        }
+    }
+
+    /// <summary>True si Desktop Duplication lleva varios segundos sin funcionar y conviene pasar a Windows.Graphics.Capture.</summary>
+    public bool NeedsCaptureFallback =>
+        _duplicationUnavailable && !_duplicationDisabled && ReferenceEquals(_active, _duplication);
+
+    /// <summary>
+    /// Pasa del monitor capturado con Desktop Duplication a Windows.Graphics.Capture sobre el mismo monitor.
+    /// Se queda así hasta recrear la cadena. Debe llamarse desde fuera del hilo de captura (lo hace el motor).
+    /// </summary>
+    /// <returns>True si WGC arrancó; si falla se mantiene Desktop Duplication, que sigue reintentando.</returns>
+    public bool FallbackToGraphicsCapture()
+    {
+        var target = _active?.CurrentTarget;
+        _duplicationUnavailable = false;
+        if (target is null || !target.IsMonitor) return false;
+
+        StopCapture();
+        _converter.ResetInputCache();
+        try
+        {
+            _graphicsCapture.Start(target);
+            _active = _graphicsCapture;
+            _duplicationDisabled = true;
+            Logger.Warn($"Respaldo activado: {target.Description} ahora se captura con Windows.Graphics.Capture.");
+            return true;
+        }
+        catch (Exception ex)
+        {
+            Logger.Error("Falló el respaldo a Windows.Graphics.Capture; se vuelve a Desktop Duplication", ex);
+            try
+            {
+                _duplication!.Start(target);
+                _active = _duplication;
+            }
+            catch (Exception ex2)
+            {
+                Logger.Error("Tampoco se pudo reanudar Desktop Duplication", ex2);
+                ShowBlack();
+            }
+            return false;
         }
     }
 
