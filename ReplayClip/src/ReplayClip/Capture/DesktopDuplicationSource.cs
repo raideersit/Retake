@@ -33,6 +33,10 @@ public sealed class DesktopDuplicationSource : ICaptureSource
     private bool _hasFrame;
     private long _lastFrameTime;
     private DateTime _failingSince = DateTime.MaxValue;
+    private volatile bool _unavailableRaised;
+
+    /// <summary>Tiempo sin poder duplicar la salida (con el monitor presente) tras el cual se pide el respaldo a WGC.</summary>
+    private static readonly TimeSpan UnavailableAfter = TimeSpan.FromSeconds(3);
 
     /// <param name="framesPerSecond">Fps de salida: se consulta la duplicación al doble de esa frecuencia.</param>
     public DesktopDuplicationSource(D3DDeviceManager device, int framesPerSecond, bool captureCursor, CaptureFrameHandler onFrame)
@@ -44,6 +48,13 @@ public sealed class DesktopDuplicationSource : ICaptureSource
     }
 
     public event Action<CaptureTarget>? TargetClosed;
+
+    /// <summary>
+    /// La duplicación lleva más de unos segundos sin recuperarse (p. ej. un juego en pantalla completa
+    /// exclusiva). Se invoca una sola vez, en el hilo de captura: quien la reciba NO debe detener esta
+    /// fuente desde ese hilo, solo marcar el aviso y actuar desde otro.
+    /// </summary>
+    public event Action? Unavailable;
 
     public CaptureTarget? CurrentTarget { get; private set; }
 
@@ -67,6 +78,8 @@ public sealed class DesktopDuplicationSource : ICaptureSource
         CurrentTarget = target;
         _stop = false;
         _hasFrame = false;
+        _unavailableRaised = false;
+        _failingSince = DateTime.MaxValue;
         _thread = new Thread(CaptureLoop) { IsBackground = true, Name = "ReplayClip.DesktopDuplication", Priority = ThreadPriority.AboveNormal };
         _thread.Start();
         Logger.Info($"Captura iniciada con Desktop Duplication: {target.Description} ({_width}x{_height}).");
@@ -158,11 +171,21 @@ public sealed class DesktopDuplicationSource : ICaptureSource
                 _failingSince = DateTime.UtcNow;
                 Logger.Info($"Desktop Duplication no disponible por ahora (0x{ex.ResultCode.Code:X8}); se reintenta.");
             }
-            else if (DateTime.UtcNow - _failingSince > TimeSpan.FromSeconds(5) && !MonitorStillExists())
+            else
             {
-                var target = CurrentTarget;
-                _stop = true;
-                if (target is not null) TargetClosed?.Invoke(target);
+                var failingFor = DateTime.UtcNow - _failingSince;
+                if (failingFor > TimeSpan.FromSeconds(5) && !MonitorStillExists())
+                {
+                    var target = CurrentTarget;
+                    _stop = true;
+                    if (target is not null) TargetClosed?.Invoke(target);
+                }
+                else if (failingFor > UnavailableAfter && !_unavailableRaised)
+                {
+                    _unavailableRaised = true;
+                    Logger.Warn($"Desktop Duplication sigue sin estar disponible tras {failingFor.TotalSeconds:F0} s (0x{ex.ResultCode.Code:X8}); se pide el respaldo.");
+                    Unavailable?.Invoke();
+                }
             }
             Thread.Sleep(250);
             return false;
